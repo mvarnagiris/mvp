@@ -8,8 +8,8 @@ import rx.Observable.just
 import kotlin.test.assertFalse
 
 class PresenterTest {
-    val view = mock<View>()
-    val presenter: Presenter<View> = object : Presenter<View>() {
+    val view = mock<Presenter.View>()
+    val presenter: Presenter<Presenter.View> = object : Presenter<Presenter.View>() {
     }
 
     @Test(expected = IllegalStateException::class)
@@ -33,7 +33,7 @@ class PresenterTest {
     @Test(expected = IllegalStateException::class)
     fun throwsIllegalStateExceptionWhenTryingToDetachDifferentView() {
         presenter.attach(view)
-        presenter.detach(mock<View>())
+        presenter.detach(mock<Presenter.View>())
     }
 
     @Test
@@ -50,7 +50,7 @@ class PresenterTest {
         assertFalse { isSubscribed }
     }
 
-    interface ViewForTest : View {
+    interface ViewForTest : Presenter.View {
         fun events(): Observable<Unit>
     }
 

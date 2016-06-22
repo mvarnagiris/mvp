@@ -4,7 +4,7 @@ import rx.Observable
 import rx.Subscription
 import rx.subscriptions.CompositeSubscription
 
-abstract class Presenter<VIEW : View> {
+abstract class Presenter<VIEW : Presenter.View> {
     private lateinit var viewSubscriptions: CompositeSubscription
     private var view: View? = null
 
@@ -44,4 +44,6 @@ abstract class Presenter<VIEW : View> {
         else if (this.view != view)
             throw IllegalStateException("Trying to detach different view. We have view: ${this.view}. Trying to detach view: $view")
     }
+
+    interface View
 }
