@@ -33,8 +33,12 @@ abstract class Presenter<VIEW : Presenter.View> {
     }
 
     protected fun <T> Observable<T>.subscribeUntilDetached(onNext: (T) -> Unit) = subscribe(onNext).apply { unsubscribeOnDetach(this) }
+
     protected fun <T> Observable<T>.subscribeUntilDetached(onNext: (T) -> Unit, onError: (Throwable) -> Unit) =
             subscribe(onNext, onError).apply { unsubscribeOnDetach(this) }
+
+    protected fun <T> Observable<T>.subscribeUntilDetached(onNext: (T) -> Unit, onError: (Throwable) -> Unit, onComplete: () -> Unit) =
+            subscribe(onNext, onError, onComplete).apply { unsubscribeOnDetach(this) }
 
     private fun ensureViewIsNotAttached(view: VIEW) {
         if (this.view != null) throw IllegalStateException("Cannot attach $view, because ${this.view} is already attached")
