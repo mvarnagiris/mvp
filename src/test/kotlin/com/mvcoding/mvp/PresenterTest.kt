@@ -14,26 +14,26 @@ class PresenterTest {
 
     @Test(expected = IllegalStateException::class)
     fun throwsIllegalStateExceptionWhenViewIsAlreadyAttached() {
-        presenter.attach(view)
-        presenter.attach(view)
+        presenter attach view
+        presenter attach view
     }
 
     @Test(expected = IllegalStateException::class)
     fun throwsIllegalStateExceptionWhenViewWasNotAttached() {
-        presenter.detach(view)
+        presenter detach view
     }
 
     @Test(expected = IllegalStateException::class)
     fun throwsIllegalStateExceptionWhenViewWasAlreadyDetached() {
-        presenter.attach(view)
-        presenter.detach(view)
-        presenter.detach(view)
+        presenter attach view
+        presenter detach view
+        presenter detach view
     }
 
     @Test(expected = IllegalStateException::class)
     fun throwsIllegalStateExceptionWhenTryingToDetachDifferentView() {
-        presenter.attach(view)
-        presenter.detach(mock<Presenter.View>())
+        presenter attach view
+        presenter detach mock<Presenter.View>()
     }
 
     @Test
@@ -44,8 +44,8 @@ class PresenterTest {
         val events = just(Unit).doOnSubscribe { isSubscribed = true }.doOnUnsubscribe { isSubscribed = false }
         whenever(view.events()).thenReturn(events)
 
-        presenter.attach(view)
-        presenter.detach(view)
+        presenter attach view
+        presenter detach view
 
         assertFalse { isSubscribed }
     }

@@ -8,14 +8,14 @@ abstract class Presenter<VIEW : Presenter.View> {
     private lateinit var viewSubscriptions: CompositeSubscription
     private var view: View? = null
 
-    fun attach(view: VIEW) {
+    infix fun attach(view: VIEW) {
         ensureViewIsNotAttached(view)
         this.view = view
         this.viewSubscriptions = CompositeSubscription()
         onViewAttached(view)
     }
 
-    fun detach(view: VIEW) {
+    infix fun detach(view: VIEW) {
         ensureGivenViewIsAttached(view)
         this.view = null
         this.viewSubscriptions.unsubscribe()
