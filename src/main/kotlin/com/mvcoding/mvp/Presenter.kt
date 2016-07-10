@@ -32,6 +32,8 @@ abstract class Presenter<VIEW : Presenter.View> {
         viewSubscriptions.add(subscription)
     }
 
+    protected fun <T> Observable<T>.subscribeUntilDetached() = subscribe().apply { unsubscribeOnDetach(this) }
+
     protected fun <T> Observable<T>.subscribeUntilDetached(onNext: (T) -> Unit) = subscribe(onNext).apply { unsubscribeOnDetach(this) }
 
     protected fun <T> Observable<T>.subscribeUntilDetached(onNext: (T) -> Unit, onError: (Throwable) -> Unit) =
