@@ -2,7 +2,7 @@ group 'mvcoding'
 version '1.0.0'
 
 buildscript {
-    ext.kotlin_version = '1.0.2-1'
+    ext.kotlin_version = '1.2.30'
     repositories {
         mavenCentral()
     }
@@ -14,15 +14,16 @@ buildscript {
 repositories {
     mavenCentral()
     jcenter()
+    maven { url 'https://jitpack.io' }
 }
 
 apply plugin: 'kotlin'
 
 dependencies {
     compile "org.jetbrains.kotlin:kotlin-stdlib:$kotlin_version"
-    compile "io.reactivex:rxkotlin:0.55.0"
+    compile "io.reactivex.rxjava2:rxkotlin:2.2.0"
 
     testCompile "junit:junit:4.12"
     testCompile "org.jetbrains.kotlin:kotlin-test:$kotlin_version"
-    testCompile "com.nhaarman:mockito-kotlin:0.5.0"
+    testCompile "com.nhaarman.mockitokotlin2:mockito-kotlin:2.0.0-alpha03"
 }

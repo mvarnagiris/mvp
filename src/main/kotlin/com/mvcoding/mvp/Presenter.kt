@@ -1,46 +1,65 @@
 package com.mvcoding.mvp
 
-import rx.Observable
-import rx.Subscription
-import rx.subscriptions.CompositeSubscription
+import io.reactivex.Flowable
+import io.reactivex.Maybe
+import io.reactivex.Observable
+import io.reactivex.Single
+import io.reactivex.disposables.CompositeDisposable
+import io.reactivex.disposables.Disposable
 
-abstract class Presenter<VIEW : Presenter.View> {
-    private lateinit var viewSubscriptions: CompositeSubscription
+abstract class Presenter<in VIEW : Presenter.View> {
+    private lateinit var compositeDisposable: CompositeDisposable
     private var view: View? = null
 
     infix fun attach(view: VIEW) {
         ensureViewIsNotAttached(view)
         this.view = view
-        this.viewSubscriptions = CompositeSubscription()
+        this.compositeDisposable = CompositeDisposable()
         onViewAttached(view)
     }
 
     infix fun detach(view: VIEW) {
         ensureGivenViewIsAttached(view)
         this.view = null
-        this.viewSubscriptions.unsubscribe()
+        this.compositeDisposable.dispose()
         onViewDetached(view)
     }
 
-    open protected fun onViewAttached(view: VIEW) {
+    protected open fun onViewAttached(view: VIEW) {
     }
 
-    open protected fun onViewDetached(view: VIEW) {
+    protected open fun onViewDetached(view: VIEW) {
     }
 
-    protected fun unsubscribeOnDetach(subscription: Subscription) {
-        viewSubscriptions.add(subscription)
+    private fun disposeOnDetach(disposable: Disposable) {
+        compositeDisposable.add(disposable)
     }
 
-    protected fun <T> Observable<T>.subscribeUntilDetached() = subscribe().apply { unsubscribeOnDetach(this) }
+    protected fun <T> Observable<T>.subscribeUntilDetached(): Disposable = subscribe().apply { disposeOnDetach(this) }
+    protected fun <T> Flowable<T>.subscribeUntilDetached(): Disposable = subscribe().apply { disposeOnDetach(this) }
+    protected fun <T> Single<T>.subscribeUntilDetached(): Disposable = subscribe().apply { disposeOnDetach(this) }
+    protected fun <T> Maybe<T>.subscribeUntilDetached(): Disposable = subscribe().apply { disposeOnDetach(this) }
 
-    protected fun <T> Observable<T>.subscribeUntilDetached(onNext: (T) -> Unit) = subscribe(onNext).apply { unsubscribeOnDetach(this) }
+    protected fun <T> Observable<T>.subscribeUntilDetached(onNext: (T) -> Unit): Disposable = subscribe(onNext).apply { disposeOnDetach(this) }
+    protected fun <T> Flowable<T>.subscribeUntilDetached(onNext: (T) -> Unit): Disposable = subscribe(onNext).apply { disposeOnDetach(this) }
+    protected fun <T> Single<T>.subscribeUntilDetached(onSuccess: (T) -> Unit): Disposable = subscribe(onSuccess).apply { disposeOnDetach(this) }
+    protected fun <T> Maybe<T>.subscribeUntilDetached(onSuccess: (T) -> Unit): Disposable = subscribe(onSuccess).apply { disposeOnDetach(this) }
 
-    protected fun <T> Observable<T>.subscribeUntilDetached(onNext: (T) -> Unit, onError: (Throwable) -> Unit) =
-            subscribe(onNext, onError).apply { unsubscribeOnDetach(this) }
+    protected fun <T> Observable<T>.subscribeUntilDetached(onNext: (T) -> Unit, onError: (Throwable) -> Unit): Disposable =
+            subscribe(onNext, onError).apply { disposeOnDetach(this) }
+    protected fun <T> Flowable<T>.subscribeUntilDetached(onNext: (T) -> Unit, onError: (Throwable) -> Unit): Disposable =
+            subscribe(onNext, onError).apply { disposeOnDetach(this) }
+    protected fun <T> Single<T>.subscribeUntilDetached(onSuccess: (T) -> Unit, onError: (Throwable) -> Unit): Disposable =
+            subscribe(onSuccess, onError).apply { disposeOnDetach(this) }
+    protected fun <T> Maybe<T>.subscribeUntilDetached(onSuccess: (T) -> Unit, onError: (Throwable) -> Unit): Disposable =
+            subscribe(onSuccess, onError).apply { disposeOnDetach(this) }
 
-    protected fun <T> Observable<T>.subscribeUntilDetached(onNext: (T) -> Unit, onError: (Throwable) -> Unit, onComplete: () -> Unit) =
-            subscribe(onNext, onError, onComplete).apply { unsubscribeOnDetach(this) }
+    protected fun <T> Observable<T>.subscribeUntilDetached(onNext: (T) -> Unit, onError: (Throwable) -> Unit, onComplete: () -> Unit): Disposable =
+            subscribe(onNext, onError, onComplete).apply { disposeOnDetach(this) }
+    protected fun <T> Flowable<T>.subscribeUntilDetached(onNext: (T) -> Unit, onError: (Throwable) -> Unit, onComplete: () -> Unit): Disposable =
+            subscribe(onNext, onError, onComplete).apply { disposeOnDetach(this) }
+    protected fun <T> Maybe<T>.subscribeUntilDetached(onSuccess: (T) -> Unit, onError: (Throwable) -> Unit, onComplete: () -> Unit): Disposable =
+            subscribe(onSuccess, onError, onComplete).apply { disposeOnDetach(this) }
 
     private fun ensureViewIsNotAttached(view: VIEW) {
         if (this.view != null) throw IllegalStateException("Cannot attach $view, because ${this.view} is already attached")
