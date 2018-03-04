@@ -1,5 +1,8 @@
 package com.mvcoding.mvp
 
+import com.memoizr.assertk.expect
+import com.memoizr.assertk.isInstance
+import com.memoizr.assertk.of
 import com.nhaarman.mockitokotlin2.mock
 import com.nhaarman.mockitokotlin2.whenever
 import io.reactivex.*
@@ -32,28 +35,35 @@ class PresenterTest {
         whenever(viewForTest.maybeOnSuccessOnErrorOnComplete()).thenReturn(Maybe.never())
     }
 
-    @Test(expected = IllegalStateException::class)
+    @Test
     fun `throws error when view is already attached`() {
-        presenter attach view
-        presenter attach view
+        expect thatThrownBy {
+            presenter attach view
+            presenter attach view
+        } hasMessageContaining "already attached" isInstance of<IllegalStateException>()
     }
 
-    @Test(expected = IllegalStateException::class)
+    @Test
     fun `throws error when view was not attached`() {
-        presenter detach view
+        expect thatThrownBy {
+            presenter detach view
+        } hasMessageContaining "View is already detached." isInstance of<IllegalStateException>()
     }
 
-    @Test(expected = IllegalStateException::class)
+    @Test
     fun `throws error when view was already detached`() {
-        presenter attach view
-        presenter detach view
-        presenter detach view
+        expect thatThrownBy {
+            presenter attach view
+            presenter detach view
+            presenter detach view
+        } hasMessageContaining "View is already detached." isInstance of<IllegalStateException>()
     }
 
-    @Test(expected = IllegalStateException::class)
+    @Test
     fun `throws error when trying to detach different view`() {
-        presenter attach view
-        presenter detach mock()
+        expect thatThrownBy {
+            presenter attach view
+        } hasMessageContaining "Trying to detach different view." isInstance of<IllegalStateException>()
     }
 
     @Test
