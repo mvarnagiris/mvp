@@ -1,14 +1,15 @@
 package com.mvcoding.mvp
 
-import io.reactivex.Observable
-
 interface LoadingView : Presenter.View {
     fun showLoading()
     fun hideLoading()
 }
 
-fun <T, VIEW : LoadingView> O<T>.showHideLoading(view: VIEW): O<T> =
-        Observable.just(Unit).doOnNext { view.showLoading() }
+fun <T, VIEW : LoadingView> O<T>.showHideLoading(view: VIEW, schedulers: RxSchedulers = trampolines): O<T> =
+        O.just(Unit)
+                .observeOn(schedulers.main)
+                .doOnNext { view.showLoading() }
                 .switchMap { this }
+                .observeOn(schedulers.main)
                 .doOnNext { view.hideLoading() }
                 .doOnError { view.hideLoading() }

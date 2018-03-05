@@ -1,39 +1,38 @@
 package com.mvcoding.mvp
 
-import com.nhaarman.mockitokotlin2.*
-import io.reactivex.Observable
+import com.nhaarman.mockitokotlin2.inOrder
+import com.nhaarman.mockitokotlin2.mock
+import com.nhaarman.mockitokotlin2.verify
+import com.nhaarman.mockitokotlin2.verifyNoMoreInteractions
+import io.reactivex.observers.TestObserver
 import io.reactivex.subjects.PublishSubject
-import org.junit.Before
 import org.junit.Test
-import ro.kreator.aRandom
 
 
 class LoadingViewTest {
 
-    val view = mock<ViewForTest>()
-    val dataSource = mock<DataSource<String, String>>()
-    val input by aRandom<String>()
-    val data by aRandom<String>()
+    @Test
+    fun `showHideLoading shows loading before observable is called and hides loading when observable emits value`() {
+        val view = mock<LoadingView>()
+        val publishSubject = PublishSubject.create<Int>()
+        val observer = TestObserver.create<Int>()
 
-    interface ViewForTest : DataView<String>, LoadingView
+        publishSubject.showHideLoading(view).subscribe(observer)
+        verify(view).showLoading()
+        verifyNoMoreInteractions(view)
 
-    @Before
-    fun setUp() {
-        whenever(dataSource.data(any())).thenReturn(Observable.just(data))
+        publishSubject.onNext(1)
+        verify(view).hideLoading()
     }
 
     @Test
-    fun `showHideLoading shows loading before loading data and hides loading after`() {
-        Observable.just(input)
-                .loadData(view, dataSource)
-                .showHideLoading(view)
-                .subscribe()
+    fun `showHideLoading hides loading when observable returns error`() {
+        val view = mock<LoadingView>()
+        val observer = TestObserver.create<Int>()
 
-        verify(dataSource).data(input)
-
+        O.error<Int>(Throwable()).showHideLoading(view).subscribe(observer)
         inOrder(view) {
             verify(view).showLoading()
-            verify(view).showData(data)
             verify(view).hideLoading()
         }
     }
