@@ -8,49 +8,30 @@ import org.junit.Test
 import ro.kreator.aRandom
 
 
-class BehavioursTest {
+class LoadingViewTest {
 
     val view = mock<ViewForTest>()
     val dataSource = mock<DataSource<String, String>>()
     val input by aRandom<String>()
     val data by aRandom<String>()
 
-    val refreshSubject = PublishSubject.create<Unit>()
-
-    interface ViewForTest : DataView<String>, LoadingView, RefreshableView, ErrorView
+    interface ViewForTest : DataView<String>, LoadingView
 
     @Before
     fun setUp() {
         whenever(dataSource.data(any())).thenReturn(Observable.just(data))
-        whenever(view.refreshes()).thenReturn(refreshSubject)
     }
 
     @Test
-    fun `integration`() {
+    fun `showHideLoading shows loading before loading data and hides loading after`() {
         Observable.just(input)
                 .loadData(view, dataSource)
                 .showHideLoading(view)
-                .recoverFromErrors(view)
-                .refreshable(view)
                 .subscribe()
 
-        whenever(dataSource.data(any())).thenReturn(Observable.error(Throwable()))
-
-        refreshSubject.onNext(Unit)
-
-        whenever(dataSource.data(any())).thenReturn(Observable.just(data))
-
-        refreshSubject.onNext(Unit)
+        verify(dataSource).data(input)
 
         inOrder(view) {
-            verify(view).showLoading()
-            verify(view).showData(data)
-            verify(view).hideLoading()
-
-            verify(view).showLoading()
-            verify(view).hideLoading()
-            verify(view).showError()
-
             verify(view).showLoading()
             verify(view).showData(data)
             verify(view).hideLoading()

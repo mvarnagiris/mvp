@@ -8,7 +8,7 @@ import org.junit.Test
 import ro.kreator.aRandom
 
 
-class BehavioursTest {
+class ErrorViewTest {
 
     val view = mock<ViewForTest>()
     val dataSource = mock<DataSource<String, String>>()
@@ -17,7 +17,7 @@ class BehavioursTest {
 
     val refreshSubject = PublishSubject.create<Unit>()
 
-    interface ViewForTest : DataView<String>, LoadingView, RefreshableView, ErrorView
+    interface ViewForTest : DataView<String>, RefreshableView, ErrorView
 
     @Before
     fun setUp() {
@@ -26,34 +26,24 @@ class BehavioursTest {
     }
 
     @Test
-    fun `integration`() {
+    fun `recoverFromError recoversFromErrors`() {
+        whenever(dataSource.data(any())).thenReturn(Observable.error(Throwable()))
+
         Observable.just(input)
                 .loadData(view, dataSource)
-                .showHideLoading(view)
                 .recoverFromErrors(view)
                 .refreshable(view)
                 .subscribe()
 
-        whenever(dataSource.data(any())).thenReturn(Observable.error(Throwable()))
-
-        refreshSubject.onNext(Unit)
+        verify(dataSource).data(input)
+        verify(view, never()).showData(data)
+        verify(view).showError()
 
         whenever(dataSource.data(any())).thenReturn(Observable.just(data))
 
         refreshSubject.onNext(Unit)
 
-        inOrder(view) {
-            verify(view).showLoading()
-            verify(view).showData(data)
-            verify(view).hideLoading()
-
-            verify(view).showLoading()
-            verify(view).hideLoading()
-            verify(view).showError()
-
-            verify(view).showLoading()
-            verify(view).showData(data)
-            verify(view).hideLoading()
-        }
+        verify(dataSource, times(2)).data(input)
+        verify(view).showData(data)
     }
 }
