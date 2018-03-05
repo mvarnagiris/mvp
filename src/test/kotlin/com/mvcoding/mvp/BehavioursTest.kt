@@ -14,10 +14,11 @@ class BehavioursTest {
     val dataSource = mock<DataSource<String, String>>()
     val input by aRandom<String>()
     val data by aRandom<String>()
+    val mapError = { error: Throwable -> error}
 
     val refreshSubject = PublishSubject.create<Unit>()
 
-    interface ViewForTest : DataView<String>, LoadingView, RefreshableView, ErrorView
+    interface ViewForTest : DataView<String>, LoadingView, RefreshableView, ErrorView<Throwable>
 
     @Before
     fun setUp() {
@@ -30,7 +31,7 @@ class BehavioursTest {
         Observable.just(input)
                 .loadData(view, dataSource)
                 .showHideLoading(view)
-                .showErrorAndComplete(view)
+                .showErrorAndComplete(view, mapError)
                 .refreshable(view)
                 .subscribe()
 

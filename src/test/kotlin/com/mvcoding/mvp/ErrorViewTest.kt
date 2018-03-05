@@ -11,11 +11,12 @@ class ErrorViewTest {
     @Test
     fun `showErrorAndComplete shows error and completes observable`() {
         val throwable = Throwable()
-        val view = mock<ErrorView>()
+        val view = mock<ErrorView<Throwable>>()
+        val mapError = { error: Throwable -> error}
         val observable = O.error<Int>(throwable)
         val observer = TestObserver.create<Int>()
 
-        observable.showErrorAndComplete(view).subscribe(observer)
+        observable.showErrorAndComplete(view, mapError).subscribe(observer)
 
         verify(view).showError(throwable)
         observer.assertNoValues()
