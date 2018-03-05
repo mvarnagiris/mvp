@@ -30,11 +30,12 @@ class BehavioursTest {
         Observable.just(input)
                 .loadData(view, dataSource)
                 .showHideLoading(view)
-                .recoverFromErrors(view)
+                .showErrorAndComplete(view)
                 .refreshable(view)
                 .subscribe()
 
-        whenever(dataSource.data(any())).thenReturn(Observable.error(Throwable()))
+        val throwable = Throwable()
+        whenever(dataSource.data(any())).thenReturn(Observable.error(throwable))
 
         refreshSubject.onNext(Unit)
 
@@ -49,7 +50,7 @@ class BehavioursTest {
 
             verify(view).showLoading()
             verify(view).hideLoading()
-            verify(view).showError()
+            verify(view).showError(throwable)
 
             verify(view).showLoading()
             verify(view).showData(data)
