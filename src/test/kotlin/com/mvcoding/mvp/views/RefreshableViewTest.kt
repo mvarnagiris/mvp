@@ -1,5 +1,6 @@
-package com.mvcoding.mvp
+package com.mvcoding.mvp.views
 
+import com.mvcoding.mvp.O
 import com.nhaarman.mockitokotlin2.mock
 import com.nhaarman.mockitokotlin2.whenever
 import io.reactivex.observers.TestObserver

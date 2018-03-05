@@ -1,5 +1,8 @@
-package com.mvcoding.mvp
+package com.mvcoding.mvp.views
 
+import com.mvcoding.mvp.O
+import com.mvcoding.mvp.RxSchedulers
+import com.mvcoding.mvp.trampolines
 import io.reactivex.Observable
 
 interface RefreshableView {

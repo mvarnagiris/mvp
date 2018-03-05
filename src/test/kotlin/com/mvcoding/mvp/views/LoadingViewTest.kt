@@ -1,5 +1,6 @@
-package com.mvcoding.mvp
+package com.mvcoding.mvp.views
 
+import com.mvcoding.mvp.O
 import com.nhaarman.mockitokotlin2.inOrder
 import com.nhaarman.mockitokotlin2.mock
 import com.nhaarman.mockitokotlin2.verify
