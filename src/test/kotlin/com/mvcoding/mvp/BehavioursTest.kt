@@ -14,10 +14,11 @@ class BehavioursTest {
     val dataSource = mock<DataSource<String, String>>()
     val input by aRandom<String>()
     val data by aRandom<String>()
+    val mapError = { error: Throwable -> error}
 
     val refreshSubject = PublishSubject.create<Unit>()
 
-    interface ViewForTest : DataView<String>, LoadingView, RefreshableView, ErrorView
+    interface ViewForTest : DataView<String>, LoadingView, RefreshableView, ErrorView<Throwable>
 
     @Before
     fun setUp() {
@@ -26,77 +27,16 @@ class BehavioursTest {
     }
 
     @Test
-    fun `loadData loads and shows data`() {
-        Observable.just(input).loadData(view, dataSource).subscribe()
-
-        verify(dataSource).data(input)
-        verify(view).showData(data)
-    }
-
-    @Test
-    fun `showHideLoading shows loading before loading data and hides loading after`() {
-        Observable.just(input)
-                .loadData(view, dataSource)
-                .showHideLoading(view)
-                .subscribe()
-
-        verify(dataSource).data(input)
-
-        inOrder(view) {
-            verify(view).showLoading()
-            verify(view).showData(data)
-            verify(view).hideLoading()
-        }
-    }
-
-    @Test
-    fun `refreshable refreshes data`() {
-        Observable.just(input)
-                .loadData(view, dataSource)
-                .refreshable(view)
-                .subscribe()
-
-        verify(dataSource).data(input)
-        verify(view).showData(data)
-
-        refreshSubject.onNext(Unit)
-
-        verify(dataSource, times(2)).data(input)
-        verify(view, times(2)).showData(data)
-    }
-
-    @Test
-    fun `recoverFromError recoversFromErrors`() {
-        whenever(dataSource.data(any())).thenReturn(Observable.error(Throwable()))
-
-        Observable.just(input)
-                .loadData(view, dataSource)
-                .recoverFromErrors(view)
-                .refreshable(view)
-                .subscribe()
-
-        verify(dataSource).data(input)
-        verify(view, never()).showData(data)
-        verify(view).showError()
-
-        whenever(dataSource.data(any())).thenReturn(Observable.just(data))
-
-        refreshSubject.onNext(Unit)
-
-        verify(dataSource, times(2)).data(input)
-        verify(view).showData(data)
-    }
-
-    @Test
     fun `integration`() {
         Observable.just(input)
                 .loadData(view, dataSource)
                 .showHideLoading(view)
-                .recoverFromErrors(view)
+                .showErrorAndComplete(view, mapError)
                 .refreshable(view)
                 .subscribe()
 
-        whenever(dataSource.data(any())).thenReturn(Observable.error(Throwable()))
+        val throwable = Throwable()
+        whenever(dataSource.data(any())).thenReturn(Observable.error(throwable))
 
         refreshSubject.onNext(Unit)
 
@@ -111,7 +51,7 @@ class BehavioursTest {
 
             verify(view).showLoading()
             verify(view).hideLoading()
-            verify(view).showError()
+            verify(view).showError(throwable)
 
             verify(view).showLoading()
             verify(view).showData(data)
