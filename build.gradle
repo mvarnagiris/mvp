@@ -28,4 +28,5 @@ dependencies {
     testCompile 'com.github.memoizr:assertk-core:1.0.0-beta.2'
     testCompile "org.jetbrains.kotlin:kotlin-test:$kotlin_version"
     testCompile "com.nhaarman.mockitokotlin2:mockito-kotlin:2.0.0-alpha03"
+    testCompile 'com.github.random-object-kreator:random-object-kreator:v0.1.5'
 }

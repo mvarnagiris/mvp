@@ -63,6 +63,7 @@ class PresenterTest {
     fun `throws error when trying to detach different view`() {
         expect thatThrownBy {
             presenter attach view
+            presenter detach mock()
         } hasMessageContaining "Trying to detach different view." isInstance of<IllegalStateException>()
     }
 
