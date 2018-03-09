@@ -5,30 +5,19 @@ import com.nhaarman.mockitokotlin2.mock
 import com.nhaarman.mockitokotlin2.verify
 import com.nhaarman.mockitokotlin2.whenever
 import io.reactivex.Observable
-import org.junit.Before
 import org.junit.Test
-import ro.kreator.aRandom
 
 
 class DataViewTest {
 
-    val view = mock<ViewForTest>()
-    val dataSource = mock<DataSource<String, String>>()
-    val input by aRandom<String>()
-    val data by aRandom<String>()
-
-    interface ViewForTest : DataView<String>
-
-    @Before
-    fun setUp() {
-        whenever(dataSource.data(any())).thenReturn(Observable.just(data))
-    }
-
     @Test
-    fun `loadData loads and shows data`() {
-        Observable.just(input).loadData(view, dataSource).subscribe()
+    fun `loadData shows data from observable`() {
+        val view = mock<DataView<Int>>()
+        val dataSource = mock<DataSource<Int, Int>>()
+        whenever(dataSource.data(any())).thenReturn(O.just(2))
+        Observable.just(1).loadData(view, dataSource).subscribe()
 
-        verify(dataSource).data(input)
-        verify(view).showData(data)
+        verify(dataSource).data(1)
+        verify(view).showData(2)
     }
 }
