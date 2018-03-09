@@ -4,10 +4,12 @@ import com.memoizr.assertk.expect
 import com.memoizr.assertk.isInstance
 import com.memoizr.assertk.of
 import com.nhaarman.mockitokotlin2.mock
+import com.nhaarman.mockitokotlin2.verify
 import com.nhaarman.mockitokotlin2.whenever
 import io.reactivex.*
 import org.junit.Before
 import org.junit.Test
+import javax.xml.stream.FactoryConfigurationError
 import kotlin.test.assertFalse
 import kotlin.test.assertTrue
 
@@ -190,6 +192,21 @@ class PresenterTest {
         assertTrue { maybeOnNextOnErrorOnCompleteIsDisposed }
     }
 
+    @Test
+    fun `when presenter is attached-detached it attaches-detaches all behaviors`() {
+        val behavior1 = BehaviorForTest()
+        val behavior2 = BehaviorForTest()
+        val presenter = PresenterForTest(behavior1, behavior2)
+
+        presenter attach viewForTest
+        behavior1.isAttached = true
+        behavior2.isAttached = true
+
+        presenter detach viewForTest
+        behavior1.isAttached = false
+        behavior2.isAttached = false
+    }
+
     interface ViewForTest : Presenter.View {
         fun observable(): Observable<Unit>
         fun observableOnNext(): Observable<Unit>
@@ -208,7 +225,7 @@ class PresenterTest {
         fun maybeOnSuccessOnErrorOnComplete(): Maybe<Unit>
     }
 
-    class PresenterForTest : Presenter<ViewForTest>() {
+    class PresenterForTest(vararg behavior: Behavior<ViewForTest>) : Presenter<ViewForTest>(*behavior) {
         override fun onViewAttached(view: ViewForTest) {
             super.onViewAttached(view)
             view.observable().subscribeUntilDetached()
@@ -226,6 +243,20 @@ class PresenterTest {
             view.maybeOnSuccess().subscribeUntilDetached()
             view.maybeOnSuccessOnError().subscribeUntilDetached()
             view.maybeOnSuccessOnErrorOnComplete().subscribeUntilDetached()
+        }
+    }
+
+    class BehaviorForTest : Behavior<ViewForTest>() {
+        var isAttached = false
+
+        override fun onViewAttached(view: ViewForTest) {
+            super.onViewAttached(view)
+            isAttached = true
+        }
+
+        override fun onViewDetached(view: ViewForTest) {
+            super.onViewDetached(view)
+            isAttached = false
         }
     }
 }
