@@ -1,5 +1,6 @@
 package com.mvcoding.mvp
 
+import com.mvcoding.mvp.views.*
 import com.nhaarman.mockitokotlin2.*
 import io.reactivex.Observable
 import io.reactivex.subjects.PublishSubject
