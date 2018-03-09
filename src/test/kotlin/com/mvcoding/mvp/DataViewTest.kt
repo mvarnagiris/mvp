@@ -13,11 +13,11 @@ class DataViewTest {
     @Test
     fun `loadData shows data from observable`() {
         val view = mock<DataView<Int>>()
-        val dataSource = mock<DataSource<Int, Int>>()
-        whenever(dataSource.data(any())).thenReturn(O.just(2))
+        val dataSource = mock<(Int) -> O<Int>>()
+        whenever(dataSource(any())).thenReturn(O.just(2))
         Observable.just(1).loadData(view, dataSource).subscribe()
 
-        verify(dataSource).data(1)
+        verify(dataSource).invoke(1)
         verify(view).showData(2)
     }
 }

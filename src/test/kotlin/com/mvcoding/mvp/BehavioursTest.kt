@@ -11,7 +11,7 @@ import ro.kreator.aRandom
 class BehavioursTest {
 
     val view = mock<ViewForTest>()
-    val dataSource = mock<DataSource<String, String>>()
+    val dataSource = mock<(String) -> O<String>>()
     val input by aRandom<String>()
     val data by aRandom<String>()
     val mapError = { error: Throwable -> error}
@@ -22,7 +22,7 @@ class BehavioursTest {
 
     @Before
     fun setUp() {
-        whenever(dataSource.data(any())).thenReturn(Observable.just(data))
+        whenever(dataSource(any())).thenReturn(Observable.just(data))
         whenever(view.refreshes()).thenReturn(refreshSubject)
     }
 
@@ -36,11 +36,11 @@ class BehavioursTest {
                 .subscribe()
 
         val throwable = Throwable()
-        whenever(dataSource.data(any())).thenReturn(Observable.error(throwable))
+        whenever(dataSource(any())).thenReturn(Observable.error(throwable))
 
         refreshSubject.onNext(Unit)
 
-        whenever(dataSource.data(any())).thenReturn(Observable.just(data))
+        whenever(dataSource(any())).thenReturn(Observable.just(data))
 
         refreshSubject.onNext(Unit)
 
