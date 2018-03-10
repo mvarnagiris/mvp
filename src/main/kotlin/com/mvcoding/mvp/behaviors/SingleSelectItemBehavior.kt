@@ -7,7 +7,7 @@ import com.mvcoding.mvp.RxSchedulers
 import com.mvcoding.mvp.behaviors.SingleSelectItemBehavior.SingleSelectState.*
 import io.reactivex.rxkotlin.withLatestFrom
 
-class SingleSelectItemBehavior<ITEM, in VIEW>(
+class SingleSelectItemBehavior<ITEM, in VIEW : SingleSelectItemBehavior.View>(
         private val item: ITEM,
         private val noItem: ITEM,
         private val getSelectedItem: () -> O<ITEM>,
@@ -15,9 +15,7 @@ class SingleSelectItemBehavior<ITEM, in VIEW>(
         private val showNothingSelected: (VIEW, ITEM) -> Unit,
         private val showOtherSelected: (VIEW, ITEM) -> Unit,
         private val showThisSelected: (VIEW, ITEM) -> Unit,
-        private val schedulers: RxSchedulers) : Behavior<VIEW>()
-        where VIEW : Presenter.View,
-              VIEW : SingleSelectItemBehavior.View {
+        private val schedulers: RxSchedulers) : Behavior<VIEW>() {
 
     override fun onViewAttached(view: VIEW) {
         super.onViewAttached(view)
