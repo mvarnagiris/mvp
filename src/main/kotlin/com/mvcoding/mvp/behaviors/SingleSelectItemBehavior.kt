@@ -7,14 +7,11 @@ import com.mvcoding.mvp.RxSchedulers
 import com.mvcoding.mvp.behaviors.SingleSelectItemBehavior.SingleSelectState.*
 import io.reactivex.rxkotlin.withLatestFrom
 
-class SingleSelectItemBehavior<ITEM, in VIEW : SingleSelectItemBehavior.View>(
+class SingleSelectItemBehavior<in ITEM, in VIEW : SingleSelectItemBehavior.View<ITEM>>(
         private val item: ITEM,
         private val noItem: ITEM,
         private val getSelectedItem: () -> O<ITEM>,
         private val setSelectedItem: (ITEM) -> Unit,
-        private val showNothingSelected: (VIEW, ITEM) -> Unit,
-        private val showOtherSelected: (VIEW, ITEM) -> Unit,
-        private val showThisSelected: (VIEW, ITEM) -> Unit,
         private val schedulers: RxSchedulers) : Behavior<VIEW>() {
 
     override fun onViewAttached(view: VIEW) {
@@ -28,7 +25,7 @@ class SingleSelectItemBehavior<ITEM, in VIEW : SingleSelectItemBehavior.View>(
                 .subscribeUntilDetached { showSingleSelectState(view, it) }
 
         view.selects()
-                .withLatestFrom(singleSelectStateObservable) { _, singleSelectState -> if (singleSelectState == THIS_SELECTED) noItem else item }
+                .withLatestFrom(singleSelectStateObservable) { _, singleSelectState -> if (singleSelectState == ThisSelected) noItem else item }
                 .observeOn(schedulers.main)
                 .subscribeUntilDetached { setSelectedItem(it) }
     }
@@ -39,22 +36,30 @@ class SingleSelectItemBehavior<ITEM, in VIEW : SingleSelectItemBehavior.View>(
     }
 
     private fun newSingleSelectState(item: ITEM): SingleSelectState = when (item) {
-        noItem -> NOTHING_SELECTED
-        this.item -> THIS_SELECTED
-        else -> OTHER_SELECTED
+        this.item -> ThisSelected
+        noItem -> NothingSelected
+        else -> OtherSelected(item)
     }
 
     private fun showSingleSelectState(view: VIEW, singleSelectState: SingleSelectState) {
+        @Suppress("UNCHECKED_CAST")
         when (singleSelectState) {
-            NOTHING_SELECTED -> showNothingSelected(view, item)
-            OTHER_SELECTED -> showOtherSelected(view, item)
-            THIS_SELECTED -> showThisSelected(view, item)
+            ThisSelected -> view.showThisSelected(item)
+            NothingSelected -> view.showNothingSelected(item)
+            is OtherSelected<*> -> view.showOtherSelected(item, singleSelectState.item as ITEM)
         }
     }
 
-    enum class SingleSelectState { NOTHING_SELECTED, OTHER_SELECTED, THIS_SELECTED }
+    private sealed class SingleSelectState {
+        object ThisSelected : SingleSelectState()
+        object NothingSelected : SingleSelectState()
+        data class OtherSelected<out ITEM>(val item: ITEM) : SingleSelectState()
+    }
 
-    interface View : Presenter.View {
+    interface View<in ITEM> : Presenter.View {
         fun selects(): O<Unit>
+        fun showThisSelected(item: ITEM)
+        fun showNothingSelected(item: ITEM)
+        fun showOtherSelected(item: ITEM, other: ITEM)
     }
 }

@@ -17,14 +17,12 @@ class SingleSelectItemBehaviorTest {
 
     private val getSelectedItem = mock<() -> O<String>>()
     private val setSelectedItem = mock<(String) -> Unit>()
-    private val view = mock<TestView>()
-    private val behavior = SingleSelectItemBehavior<String, TestView>(item,
+    private val view = mock<SingleSelectItemBehavior.View<String>>()
+    private val behavior = SingleSelectItemBehavior(
+            item,
             noItem,
             getSelectedItem,
             setSelectedItem,
-            { view, item -> view.showNothingSelected(item) },
-            { view, item -> view.showOtherSelected(item) },
-            { view, item -> view.showThisSelected(item) },
             trampolines)
 
     @Before
@@ -107,7 +105,7 @@ class SingleSelectItemBehaviorTest {
 
         behavior attach view
 
-        verify(view).showOtherSelected(item)
+        verify(view).showOtherSelected(item, otherItem)
     }
 
     @Test
@@ -120,10 +118,4 @@ class SingleSelectItemBehaviorTest {
     }
 
     private fun select() = selectsRelay.accept(Unit)
-
-    private interface TestView : SingleSelectItemBehavior.View {
-        fun showNothingSelected(item: String)
-        fun showOtherSelected(item: String)
-        fun showThisSelected(item: String)
-    }
 }
