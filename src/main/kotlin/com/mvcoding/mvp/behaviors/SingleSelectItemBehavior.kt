@@ -7,14 +7,11 @@ import com.mvcoding.mvp.RxSchedulers
 import com.mvcoding.mvp.behaviors.SingleSelectItemBehavior.SingleSelectState.*
 import io.reactivex.rxkotlin.withLatestFrom
 
-class SingleSelectItemBehavior<ITEM, in VIEW : SingleSelectItemBehavior.View>(
+class SingleSelectItemBehavior<in ITEM, in VIEW : SingleSelectItemBehavior.View<ITEM>>(
         private val item: ITEM,
         private val noItem: ITEM,
         private val getSelectedItem: () -> O<ITEM>,
         private val setSelectedItem: (ITEM) -> Unit,
-        private val showNothingSelected: (VIEW, ITEM) -> Unit,
-        private val showOtherSelected: (VIEW, ITEM) -> Unit,
-        private val showThisSelected: (VIEW, ITEM) -> Unit,
         private val schedulers: RxSchedulers) : Behavior<VIEW>() {
 
     override fun onViewAttached(view: VIEW) {
@@ -46,15 +43,19 @@ class SingleSelectItemBehavior<ITEM, in VIEW : SingleSelectItemBehavior.View>(
 
     private fun showSingleSelectState(view: VIEW, singleSelectState: SingleSelectState) {
         when (singleSelectState) {
-            NOTHING_SELECTED -> showNothingSelected(view, item)
-            OTHER_SELECTED -> showOtherSelected(view, item)
-            THIS_SELECTED -> showThisSelected(view, item)
+            NOTHING_SELECTED -> view.showNothingSelected(item)
+            OTHER_SELECTED -> view.showOtherSelected(item)
+            THIS_SELECTED -> view.showThisSelected(item)
         }
     }
 
     enum class SingleSelectState { NOTHING_SELECTED, OTHER_SELECTED, THIS_SELECTED }
 
-    interface View : Presenter.View {
+    interface View<in DATA> : Presenter.View {
+        fun showNothingSelected(item: DATA)
+        fun showOtherSelected(item: DATA)
+        fun showThisSelected(item: DATA)
+
         fun selects(): O<Unit>
     }
 }
