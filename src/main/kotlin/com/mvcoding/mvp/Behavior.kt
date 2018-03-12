@@ -1,3 +1,3 @@
 package com.mvcoding.mvp
 
-abstract class Behavior<in VIEW : Presenter.View> : Presenter<VIEW>()
+abstract class Behavior<VIEW : Presenter.View> : Presenter<VIEW>()

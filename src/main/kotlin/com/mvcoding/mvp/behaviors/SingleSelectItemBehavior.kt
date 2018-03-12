@@ -7,7 +7,7 @@ import com.mvcoding.mvp.RxSchedulers
 import com.mvcoding.mvp.behaviors.SingleSelectItemBehavior.SingleSelectState.*
 import io.reactivex.rxkotlin.withLatestFrom
 
-class SingleSelectItemBehavior<in ITEM, in VIEW : SingleSelectItemBehavior.View<ITEM>>(
+class SingleSelectItemBehavior<in ITEM, VIEW : SingleSelectItemBehavior.View<ITEM>>(
         private val item: ITEM,
         private val noItem: ITEM,
         private val getSelectedItem: () -> O<ITEM>,

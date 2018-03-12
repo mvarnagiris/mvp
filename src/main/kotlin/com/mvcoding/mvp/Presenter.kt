@@ -7,24 +7,39 @@ import io.reactivex.Single
 import io.reactivex.disposables.CompositeDisposable
 import io.reactivex.disposables.Disposable
 
-abstract class Presenter<in VIEW : Presenter.View>(private vararg val behaviors: Behavior<VIEW>) {
+abstract class Presenter<VIEW : Presenter.View>(private vararg val behaviors: Behavior<VIEW>) {
     private lateinit var compositeDisposable: CompositeDisposable
-    private var view: View? = null
+    private var view: VIEW? = null
+    private var viewDelegate: VIEW? = null
 
     infix fun attach(view: VIEW) {
         ensureViewIsNotAttached(view)
         this.view = view
-        this.compositeDisposable = CompositeDisposable()
-        behaviors.forEach { it attach view }
-        onViewAttached(view)
+        viewDelegate = decorateView(view)
+        compositeDisposable = CompositeDisposable()
+        behaviors.forEach { it attach viewDelegate as VIEW }
+        onViewAttached(viewDelegate as VIEW)
     }
 
     infix fun detach(view: VIEW) {
         ensureGivenViewIsAttached(view)
+
+        compositeDisposable.dispose()
+        behaviors.forEach { it detach viewDelegate as VIEW }
+        onViewDetached(viewDelegate as VIEW)
+
         this.view = null
-        this.compositeDisposable.dispose()
-        behaviors.forEach { it detach view }
-        onViewDetached(view)
+        this.viewDelegate = null
+    }
+
+    open fun decorateView(view: VIEW): VIEW = view
+
+    operator fun plus(view: VIEW) {
+        attach(view)
+    }
+
+    operator fun minus(view: VIEW) {
+        detach(view)
     }
 
     protected open fun onViewAttached(view: VIEW) {
