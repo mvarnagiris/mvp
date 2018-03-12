@@ -1,9 +1,6 @@
 package com.mvcoding.mvp.behaviors
 
-import com.mvcoding.mvp.Behavior
-import com.mvcoding.mvp.O
-import com.mvcoding.mvp.Presenter
-import com.mvcoding.mvp.RxSchedulers
+import com.mvcoding.mvp.*
 import com.mvcoding.mvp.behaviors.SingleSelectItemBehavior.SingleSelectState.*
 import io.reactivex.rxkotlin.withLatestFrom
 
@@ -13,6 +10,14 @@ class SingleSelectItemBehavior<in ITEM, in VIEW : SingleSelectItemBehavior.View<
         private val getSelectedItem: () -> O<ITEM>,
         private val setSelectedItem: (ITEM) -> Unit,
         private val schedulers: RxSchedulers) : Behavior<VIEW>() {
+
+    constructor(
+            item: ITEM,
+            noItem: ITEM,
+            selectedItemSource: DataSource<ITEM>,
+            selectedItemWriter: DataWriter<ITEM>,
+            schedulers: RxSchedulers) :
+            this(item, noItem, selectedItemSource.function(), selectedItemWriter.function(), schedulers)
 
     override fun onViewAttached(view: VIEW) {
         super.onViewAttached(view)
