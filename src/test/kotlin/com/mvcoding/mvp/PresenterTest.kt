@@ -1,5 +1,6 @@
 package com.mvcoding.mvp
 
+import com.jakewharton.rxrelay2.PublishRelay
 import com.memoizr.assertk.expect
 import com.memoizr.assertk.isInstance
 import com.memoizr.assertk.of
@@ -9,7 +10,6 @@ import com.nhaarman.mockitokotlin2.whenever
 import io.reactivex.*
 import org.junit.Before
 import org.junit.Test
-import javax.xml.stream.FactoryConfigurationError
 import kotlin.test.assertFalse
 import kotlin.test.assertTrue
 
@@ -17,6 +17,7 @@ class PresenterTest {
     private val view = mock<Presenter.View>()
     private val presenter: Presenter<Presenter.View> = object : Presenter<Presenter.View>() {}
     private val viewForTest = mock<ViewForTest>()
+    private val viewForDecoratorTest = mock<ViewForDecoratorTest>()
 
     @Before
     fun setUp() {
@@ -207,6 +208,55 @@ class PresenterTest {
         behavior2.isAttached = false
     }
 
+    @Test
+    fun `when view decorator is provided decorator methods are called`() {
+        val actions = PublishRelay.create<Unit>()
+        val tracker = mock<DecoratorTracker>()
+        val presenter = PresenterWithDecorations(tracker)
+
+        whenever(viewForDecoratorTest.actionsFromView()).thenReturn(actions)
+        presenter + viewForDecoratorTest
+
+        actions.accept(Unit)
+
+        verify(viewForDecoratorTest).actionOnView()
+        verify(tracker).trackActionCameFromView()
+        verify(tracker).trackActionWasPerformedOnView()
+    }
+
+    interface DecoratorTracker {
+        fun trackActionCameFromView()
+        fun trackActionWasPerformedOnView()
+    }
+
+    class Decorator(private val view: ViewForDecoratorTest, val decoratorTracker: DecoratorTracker) : ViewForDecoratorTest by view {
+        override fun actionOnView() {
+            view.actionOnView()
+            decoratorTracker.trackActionWasPerformedOnView()
+        }
+
+        override fun actionsFromView(): Observable<Unit> = view.actionsFromView().doOnNext { decoratorTracker.trackActionCameFromView() }
+    }
+
+    class PresenterWithDecorations(val decoratorTracker: DecoratorTracker) : Presenter<ViewForDecoratorTest>() {
+
+        override fun onViewAttached(view: ViewForDecoratorTest) {
+            super.onViewAttached(view)
+
+            view.actionsFromView()
+                    .doOnNext { view.actionOnView() }
+                    .subscribeUntilDetached()
+        }
+
+        override fun decorateView(view: ViewForDecoratorTest) = Decorator(view, decoratorTracker)
+    }
+
+    interface ViewForDecoratorTest : Presenter.View {
+        fun actionsFromView(): Observable<Unit>
+
+        fun actionOnView()
+    }
+
     interface ViewForTest : Presenter.View {
         fun observable(): Observable<Unit>
         fun observableOnNext(): Observable<Unit>
@@ -223,6 +273,7 @@ class PresenterTest {
         fun maybeOnSuccess(): Maybe<Unit>
         fun maybeOnSuccessOnError(): Maybe<Unit>
         fun maybeOnSuccessOnErrorOnComplete(): Maybe<Unit>
+
     }
 
     class PresenterForTest(vararg behavior: Behavior<ViewForTest>) : Presenter<ViewForTest>(*behavior) {
@@ -244,7 +295,11 @@ class PresenterTest {
             view.maybeOnSuccessOnError().subscribeUntilDetached()
             view.maybeOnSuccessOnErrorOnComplete().subscribeUntilDetached()
         }
+
+        override fun decorateView(view: ViewForTest): ViewForTest = DummyDecorator(view)
     }
+
+    class DummyDecorator(val view: ViewForTest) : ViewForTest by view
 
     class BehaviorForTest : Behavior<ViewForTest>() {
         var isAttached = false
