@@ -1,14 +1,17 @@
 package com.mvcoding.mvp.views
 
+import com.memoizr.assertk.expect
 import com.mvcoding.mvp.*
-import com.nhaarman.mockitokotlin2.any
-import com.nhaarman.mockitokotlin2.mock
-import com.nhaarman.mockitokotlin2.verify
-import com.nhaarman.mockitokotlin2.whenever
+import com.nhaarman.mockitokotlin2.*
 import io.reactivex.Observable
+import io.reactivex.Scheduler
 import io.reactivex.plugins.RxJavaPlugins
 import org.junit.Test
+import org.mockito.Mockito
 import ro.kreator.instantiateRandomClass
+import java.lang.reflect.Proxy
+import java.util.concurrent.CountDownLatch
+import kotlin.reflect.KClass
 import kotlin.reflect.KProperty
 import kotlin.reflect.KType
 
@@ -27,10 +30,12 @@ class DataViewTest {
     }
 }
 
+val mainScheduler = Thread.currentThread().name
+
 val testSchedulers = trampolines.copy(
         io = RxJavaPlugins.createSingleScheduler { Thread(it, "test io") },
         computation = RxJavaPlugins.createSingleScheduler { Thread(it, "test computation") },
-        main = RxJavaPlugins.createSingleScheduler { Thread(it, "test main") }
+        main = RxJavaPlugins.createSingleScheduler { Thread(it, mainScheduler) }
 )
 
 class DataTestAssertion {
@@ -43,7 +48,7 @@ class DataTestAssertion {
     @Test
     fun `presenter has loadData behavior`() {
         assertion.verifyLoadDataBehavior()
-//                .verifyAllViewInteractionOnScheduler(testSchedulers.io)
+                .verifyAllViewInteractionOnScheduler(testSchedulers.main)
     }
 
 
@@ -62,39 +67,63 @@ class LoadDataBehaviourAssertion<T, V : DataView<T>>(val presenter: Presenter<V>
     }
 
     class BehAssertion<T, V : DataView<T>>(val presenter: Presenter<V>, val dataSource: DataSource<T>, val dataType: KType) {
-
-        lateinit var view: DataView<T>
         private val value = instantiateRandomClass(dataType) as T
 
-        fun verifyLoadDataBehavior(): BehAssertion<T, V> {
-            view = mock<DataView<T>>()
+
+        fun verifyLoadDataBehavior(): ThreadMock<DataView<T>> {
+            val mock = threadMock<DataView<T>>()
 
             whenever(dataSource.data()).thenReturn(O.just(value))
 
-            presenter attach view as V
+            presenter attach mock() as V
 
-            verify(view).showData(value)
+            verify(mock).showData(value)
 
-            return this
+            mock.verifyAllViewInteractionOnScheduler(testSchedulers.main)
+
+            return mock
         }
-
-//        fun verifyAllViewInteractionOnScheduler(scheduler: Scheduler) {
-//            val latch = CountDownLatch(1)
-//
-//            var t: Throwable? = null
-//            scheduler.scheduleDirect{
-//                try {
-//                    expect that threadName isEqualToIgnoringCase Thread.currentThread().name
-//                } catch (e: Throwable) {
-//                    t = e
-//                } finally {
-//                    latch.countDown()
-//                }
-//
-//            }
-//            latch.await()
-//            t?.run { throw this }
-//        }
     }
 }
 
+inline fun <reified T: Any> verify(mock: ThreadMock<T>): T = Mockito.verify(mock.mock, timeout(100))!!
+
+
+inline fun <reified T: Any> threadMock(): ThreadMock<T> {
+    val mock = mock<T>()
+    return ThreadMock(mock, T::class)
+}
+
+data class ThreadMock<T: Any>(val mock: T, val mockClass: KClass<T>) {
+
+    private data class ThreadInvocations(val method: String, val threadName: String)
+
+    operator fun invoke() = proxy
+
+    private val threads = mutableListOf<ThreadInvocations>()
+
+    private val proxy = Proxy.newProxyInstance(mockClass.java.classLoader, arrayOf(mockClass.java),
+            { proxy, method, args ->
+                val signature = "${method.name}(${method.parameters.toList().joinToString(",")})"
+                threads += ThreadInvocations(signature, Thread.currentThread().name)
+                mock::class.java.methods.find { it.name == method.name }?.invoke(mock, *args)
+            }) as T
+
+    fun verifyAllViewInteractionOnScheduler(scheduler: Scheduler) {
+        val latch = CountDownLatch(1)
+
+        var t: Throwable? = null
+        scheduler.scheduleDirect{
+            try {
+                expect that threads.all { it.threadName == Thread.currentThread().name } describedAs "Expected all invocations to occur on ${Thread.currentThread().name}, but some invocations occurred on a different thread :${threads}" _is true
+            } catch (e: Throwable) {
+                t = e
+            } finally {
+                latch.countDown()
+            }
+
+        }
+        latch.await()
+        t?.run { throw this }
+    }
+}
