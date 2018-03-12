@@ -32,7 +32,7 @@ abstract class Presenter<VIEW : Presenter.View>(private vararg val behaviors: Be
         this.viewDelegate = null
     }
 
-    open fun decorateView(view: VIEW): VIEW = view
+    open protected fun decorateView(view: VIEW): VIEW = view
 
     operator fun plus(view: VIEW) {
         attach(view)
