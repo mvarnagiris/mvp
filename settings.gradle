@@ -1,4 +1,3 @@
-rootProject.name = 'mvp'
 include 'mvp-test'
 include 'mvp'
 
