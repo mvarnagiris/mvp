@@ -8,3 +8,4 @@ class FunctionDataSource<DATA>(private val dataSource: () -> O<DATA>) : DataSour
 }
 
 fun <DATA> (() -> O<DATA>).dataSource() = FunctionDataSource(this)
+fun <DATA> O<DATA>.dataSource() = FunctionDataSource { this }
