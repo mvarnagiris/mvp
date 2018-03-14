@@ -1,12 +1,12 @@
-package com.mvcoding.mvp.views
+package com.mvcoding.mvp
 
 import com.memoizr.assertk.expect
-import com.mvcoding.mvp.*
-import com.nhaarman.mockitokotlin2.*
-import io.reactivex.Observable
+import com.mvcoding.mvp.views.DataView
+import com.nhaarman.mockitokotlin2.mock
+import com.nhaarman.mockitokotlin2.timeout
+import com.nhaarman.mockitokotlin2.whenever
 import io.reactivex.Scheduler
 import io.reactivex.plugins.RxJavaPlugins
-import org.junit.Test
 import org.mockito.Mockito
 import ro.kreator.instantiateRandomClass
 import java.lang.reflect.Proxy
@@ -16,80 +16,18 @@ import kotlin.reflect.KProperty
 import kotlin.reflect.KType
 
 
-class DataViewTest {
-
-    @Test
-    fun `loadData shows data from observable`() {
-        val view = mock<DataView<Int>>()
-        val dataSource = mock<(Int) -> O<Int>>()
-        whenever(dataSource(any())).thenReturn(O.just(2))
-        Observable.just(1).loadData(view, dataSource).subscribe()
-
-        verify(dataSource).invoke(1)
-        verify(view).showData(2)
-    }
-}
-
-val mainScheduler = Thread.currentThread().name
-
 val testSchedulers = trampolines.copy(
         io = RxJavaPlugins.createSingleScheduler { Thread(it, "test io") },
         computation = RxJavaPlugins.createSingleScheduler { Thread(it, "test computation") },
         main = RxJavaPlugins.createSingleScheduler { Thread(it, "test main") }
 )
 
-class DataTestAssertion {
-
-    val dataSource = threadMock<DataSource<List<String>>>()
-
-    val presenter = PresenterForTest(dataSource(), testSchedulers)
-    val assertion by LoadDataBehaviourAssertion(presenter, dataSource.proxy)
-
-    @Test
-    fun `presenter has loadData behavior`() {
-        assertion.verifyLoadDataBehavior()
-    }
-
-
-    class PresenterForTest(val dataSource: DataSource<List<String>>, val testSchedulers: RxSchedulers) : Presenter<DataView<List<String>>>() {
-        override fun onViewAttached(view: DataView<List<String>>) {
-            super.onViewAttached(view)
-            Observable.just("").loadData(view, {
-                dataSource.data()
-            }, testSchedulers).subscribe()
-        }
-    }
-}
-
-class LoadDataBehaviourAssertion<T, V : DataView<T>>(val presenter: Presenter<V>, val dataSource: DataSource<T>) {
-    operator fun getValue(any: Any, kProperty: KProperty<*>): BehAssertion<T, V> {
-        val dataType: KType = kProperty.returnType.arguments.first().type!!
-        return BehAssertion(presenter, dataSource, dataType)
-    }
-
-    class BehAssertion<T, V : DataView<T>>(val presenter: Presenter<V>, val dataSource: DataSource<T>, dataType: KType) {
-        private val value = instantiateRandomClass(dataType) as T
-
-        fun verifyLoadDataBehavior() {
-            val viewMock = threadMock<DataView<T>>()
-
-            whenever(dataSource.data()).thenReturn(O.just(value))
-
-            presenter attach viewMock() as V
-
-            verify(viewMock).showData(value)
-
-            viewMock.verifyAllInteractionsOn(testSchedulers.main)
-            dataSource.mockWrapper().threadMock().verifyAllInteractionsOn(testSchedulers.io)
-        }
-    }
-}
-
 inline fun <reified T : Any> verify(mock: ThreadMock<T>): T = Mockito.verify(mock.mock, timeout(100))!!
 
 inline fun <reified T : Any> T.mockWrapper(): MockWrapper {
     return this as MockWrapper
 }
+
 
 inline fun <reified T : Any> threadMock(): ThreadMock<T> {
     val mock = mock<T>()
@@ -150,3 +88,28 @@ data class ThreadMock<T : Any>(val mock: T, val mockClass: KClass<T>) {
 interface MockWrapper {
     fun threadMock(): ThreadMock<*>
 }
+
+class LoadDataBehaviourAssertion<T, V : DataView<T>>(val presenter: Presenter<V>, val dataSource: DataSource<T>) {
+    operator fun getValue(any: Any, kProperty: KProperty<*>): BehAssertion<T, V> {
+        val dataType: KType = kProperty.returnType.arguments.first().type!!
+        return BehAssertion(presenter, dataSource, dataType)
+    }
+
+    class BehAssertion<T, V : DataView<T>>(val presenter: Presenter<V>, val dataSource: DataSource<T>, dataType: KType) {
+        private val value = instantiateRandomClass(dataType) as T
+
+        fun verifyLoadDataBehavior() {
+            val viewMock = threadMock<DataView<T>>()
+
+            whenever(dataSource.data()).thenReturn(O.just(value))
+
+            presenter attach viewMock() as V
+
+            verify(viewMock).showData(value)
+
+            viewMock.verifyAllInteractionsOn(testSchedulers.main)
+            dataSource.mockWrapper().threadMock().verifyAllInteractionsOn(testSchedulers.io)
+        }
+    }
+}
+
