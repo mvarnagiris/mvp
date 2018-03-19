@@ -20,7 +20,6 @@ repositories {
 
 dependencies {
     compile project(':mvp')
-
     compile "junit:junit:4.12"
     compile 'com.github.memoizr:assertk-core:1.0.0-beta.2'
     compile "org.jetbrains.kotlin:kotlin-test:$kotlin_version"
