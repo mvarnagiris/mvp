@@ -14,18 +14,22 @@ class PagingDataSource<INVALIDATING_INPUT, PAGE_INPUT, DATA>(
         private val hasNextPage: (List<Page<PAGE_INPUT, DATA>>) -> Boolean) : DataSource<PagingData<PAGE_INPUT, DATA>> {
 
     private val nextPagesRelay = PublishRelay.create<Unit>()
+    private val stopRequestRelay = PublishRelay.create<Unit>()
     private val pages = AtomicReference(emptyList<Page<PAGE_INPUT, DATA>>())
     private val isLoading = AtomicBoolean(false)
 
     private val pagingObservable = getInvalidatingInput()
             .doOnNext { invalidate() }
+            .share()
             .switchMap { invalidatingInput ->
                 nextPagesRelay
                         .startWith(if (!isLoading.get() || pages.get().isEmpty()) Observable.just(Unit) else Observable.never())
                         .filter { !isLoading.getAndSet(true) }
-                        .switchMapSingle {
+                        .switchMap {
                             getNextPageInput(invalidatingInput, pages.get())
-                                    .flatMap { input -> getPage(input).map { Page(input, it) } }
+                                    .toObservable()
+                                    .takeUntil(stopRequestRelay)
+                                    .switchMap { input -> getPage(input).toObservable().takeUntil(stopRequestRelay).map { Page(input, it) } }
                                     .map {
                                         val newPages = pages.get().plus(it)
                                         pages.set(newPages)
@@ -50,12 +54,14 @@ class PagingDataSource<INVALIDATING_INPUT, PAGE_INPUT, DATA>(
     fun getPage() = nextPagesRelay.accept(Unit)
 
     fun invalidate() {
+        stopRequestRelay.accept(Unit)
         pages.set(emptyList())
         isLoading.set(false)
     }
 
     override fun data(): Observable<PagingData<PAGE_INPUT, DATA>> =
             if (pages.get().isNotEmpty()) pagingObservable.startWith(createPagingData(pages.get(), true))
+            else if (!isLoading.get()) pagingObservable.apply { getPage() }
             else pagingObservable
 }
 

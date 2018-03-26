@@ -120,6 +120,42 @@ class PagingDataSourceTest {
         observer3.assertValues(SoFarAllPagingData(listOf(Page("0", "00"))))
     }
 
+    @Test
+    fun `invalidating will stop ongoing request for next page input`() {
+        val nextPageInputRelay = PublishRelay.create<PageInput>()
+        whenever(getNextPageInput(any(), any())).thenReturn(nextPageInputRelay.firstOrError())
+
+        pagingDataSource.data().subscribe(observer1)
+        receiveInvalidatingInput(0)
+        pagingDataSource.invalidate()
+        nextPageInputRelay.accept("0")
+        observer1.assertNoValues()
+
+        pagingDataSource.data().subscribe(observer2)
+        nextPageInputRelay.accept("1")
+
+        observer1.assertValue(SoFarAllPagingData(listOf(Page("1", "11"))))
+        observer2.assertValue(SoFarAllPagingData(listOf(Page("1", "11"))))
+    }
+
+    @Test
+    fun `invalidating will stop ongoing request for page`() {
+        val dataRelay = PublishRelay.create<Data>()
+        whenever(getPage(any())).thenReturn(dataRelay.firstOrError())
+
+        pagingDataSource.data().subscribe(observer1)
+        receiveInvalidatingInput(0)
+        pagingDataSource.invalidate()
+        dataRelay.accept("00")
+        observer1.assertNoValues()
+
+        pagingDataSource.data().subscribe(observer2)
+        dataRelay.accept("11")
+
+        observer1.assertValue(SoFarAllPagingData(listOf(Page("0", "11"))))
+        observer2.assertValue(SoFarAllPagingData(listOf(Page("0", "11"))))
+    }
+
     private fun receiveInvalidatingInput(invalidatingInput: InvalidatingInput) = invalidatingInputRelay.accept(invalidatingInput)
 }
 
