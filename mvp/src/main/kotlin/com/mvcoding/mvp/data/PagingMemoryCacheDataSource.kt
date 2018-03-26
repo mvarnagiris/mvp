@@ -1,17 +1,17 @@
 package com.mvcoding.mvp.data
 
 import com.jakewharton.rxrelay2.PublishRelay
-import com.mvcoding.mvp.DataSource
+import com.mvcoding.mvp.*
 import io.reactivex.Observable
 import io.reactivex.Single
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicReference
 
-class PagingDataSource<INVALIDATING_INPUT, PAGE_INPUT, DATA>(
+class PagingMemoryCacheDataSource<INVALIDATING_INPUT, PAGE_INPUT, DATA>(
         getInvalidatingInput: () -> Observable<INVALIDATING_INPUT>,
         private val getPage: (PAGE_INPUT) -> Single<DATA>,
         private val getNextPageInput: (INVALIDATING_INPUT, List<Page<PAGE_INPUT, DATA>>) -> Single<PAGE_INPUT>,
-        private val hasNextPage: (List<Page<PAGE_INPUT, DATA>>) -> Boolean) : DataSource<PagingData<PAGE_INPUT, DATA>> {
+        private val hasNextPage: (List<Page<PAGE_INPUT, DATA>>) -> Boolean) : PagingDataSource<PAGE_INPUT, DATA> {
 
     private val nextPagesRelay = PublishRelay.create<Unit>()
     private val stopRequestRelay = PublishRelay.create<Unit>()
@@ -66,9 +66,9 @@ class PagingDataSource<INVALIDATING_INPUT, PAGE_INPUT, DATA>(
         else -> pagingObservable
     }
 
-    fun getPage() = nextPagesRelay.accept(Unit)
+    override fun getPage() = nextPagesRelay.accept(Unit)
 
-    fun invalidate() {
+    override fun invalidate() {
         stopRequestRelay.accept(Unit)
         pages.set(emptyList())
         isLoading.set(false)
@@ -83,22 +83,4 @@ class PagingDataSource<INVALIDATING_INPUT, PAGE_INPUT, DATA>(
             else -> LastPagePagingData(pages)
         }
     }
-}
-
-data class Page<out INPUT, out DATA>(val input: INPUT, val data: DATA)
-
-sealed class PagingData<out INPUT, out DATA> {
-    abstract val pages: List<Page<INPUT, DATA>>
-}
-
-data class SoFarAllPagingData<out INPUT, out DATA>(override val pages: List<Page<INPUT, DATA>>) : PagingData<INPUT, DATA>()
-
-data class AllPagingData<out INPUT, out DATA>(override val pages: List<Page<INPUT, DATA>>) : PagingData<INPUT, DATA>()
-
-data class NextPagePagingData<out INPUT, out DATA>(override val pages: List<Page<INPUT, DATA>>) : PagingData<INPUT, DATA>() {
-    val nextPage = pages.last()
-}
-
-data class LastPagePagingData<out INPUT, out DATA>(override val pages: List<Page<INPUT, DATA>>) : PagingData<INPUT, DATA>() {
-    val lastPage = pages.last()
 }

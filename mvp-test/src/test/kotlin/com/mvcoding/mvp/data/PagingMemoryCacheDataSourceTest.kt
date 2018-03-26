@@ -1,6 +1,7 @@
 package com.mvcoding.mvp.data
 
 import com.jakewharton.rxrelay2.PublishRelay
+import com.mvcoding.mvp.*
 import com.nhaarman.mockitokotlin2.*
 import io.reactivex.Observable
 import io.reactivex.Single
@@ -16,7 +17,7 @@ class PagingDataSourceTest {
     private val getPage = mock<(PageInput) -> Single<Data>>()
     private val getNextPageInput = mock<(InvalidatingInput, List<Page<PageInput, Data>>) -> Single<PageInput>>()
     private val hasNextPage = mock<(List<Page<PageInput, Data>>) -> Boolean>()
-    private val pagingDataSource = PagingDataSource(getInvalidatingInput, getPage, getNextPageInput, hasNextPage)
+    private val pagingDataSource = PagingMemoryCacheDataSource(getInvalidatingInput, getPage, getNextPageInput, hasNextPage)
     private val observer1 = TestObserver.create<PagingData<PageInput, Data>>()
     private val observer2 = TestObserver.create<PagingData<PageInput, Data>>()
     private val observer3 = TestObserver.create<PagingData<PageInput, Data>>()
