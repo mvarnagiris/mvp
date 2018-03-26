@@ -156,6 +156,17 @@ class PagingDataSourceTest {
         observer2.assertValue(SoFarAllPagingData(listOf(Page("0", "11"))))
     }
 
+    @Test
+    fun `changes to invalidating input will invalidate data and fetch data with new input`() {
+        pagingDataSource.data().subscribe(observer1)
+
+        receiveInvalidatingInput(0)
+        receiveInvalidatingInput(1)
+
+        observer1.assertValues(SoFarAllPagingData(listOf(Page("0", "00"))), SoFarAllPagingData(listOf(Page("0", "00"))))
+        verify(getNextPageInput).invoke(1, emptyList())
+    }
+
     private fun receiveInvalidatingInput(invalidatingInput: InvalidatingInput) = invalidatingInputRelay.accept(invalidatingInput)
 }
 
