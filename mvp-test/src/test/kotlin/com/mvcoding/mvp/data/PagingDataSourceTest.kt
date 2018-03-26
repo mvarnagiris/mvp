@@ -65,7 +65,7 @@ class PagingDataSourceTest {
         pagingDataSource.data().subscribe(observer2)
 
         receiveInvalidatingInput(0)
-        pagingDataSource.nextPage()
+        pagingDataSource.getPage()
 
         observer1.assertValueAt(1, NextPagePagingData(listOf(Page("0", "00"), Page("1", "11"))))
         observer2.assertValueAt(1, NextPagePagingData(listOf(Page("0", "00"), Page("1", "11"))))
@@ -78,7 +78,7 @@ class PagingDataSourceTest {
 
         receiveInvalidatingInput(0)
         whenever(hasNextPage(any())).thenReturn(false)
-        pagingDataSource.nextPage()
+        pagingDataSource.getPage()
 
         observer1.assertValueAt(1, LastPagePagingData(listOf(Page("0", "00"), Page("1", "11"))))
         observer2.assertValueAt(1, LastPagePagingData(listOf(Page("0", "00"), Page("1", "11"))))
@@ -91,17 +91,33 @@ class PagingDataSourceTest {
 
         pagingDataSource.data().subscribe(observer1)
 
-        pagingDataSource.nextPage()
+        pagingDataSource.getPage()
         pagingDataSource.data().subscribe(observer2)
 
-//        whenever(hasNextPage(any())).thenReturn(false)
-//        pagingDataSource.nextPage()
-//        pagingDataSource.data().subscribe(observer3)
+        whenever(hasNextPage(any())).thenReturn(false)
+        pagingDataSource.getPage()
+        pagingDataSource.data().subscribe(observer3)
 
-//        observer1.assertValues(SoFarAllPagingData(listOf(Page("0", "00"))), NextPagePagingData(listOf(Page("0", "00"), Page("1", "11"))), LastPagePagingData(listOf(Page("0", "00"), Page("1", "11"), Page("2", "22"))))
-//        observer1.assertNoValues()
+        observer1.assertValues(SoFarAllPagingData(listOf(Page("0", "00"))), NextPagePagingData(listOf(Page("0", "00"), Page("1", "11"))), LastPagePagingData(listOf(Page("0", "00"), Page("1", "11"), Page("2", "22"))))
         observer2.assertValues(SoFarAllPagingData(listOf(Page("0", "00"), Page("1", "11"))), LastPagePagingData(listOf(Page("0", "00"), Page("1", "11"), Page("2", "22"))))
-//        observer3.assertValues(AllPagingData(listOf(Page("0", "00"), Page("1", "11"), Page("2", "22"))))
+        observer3.assertValues(AllPagingData(listOf(Page("0", "00"), Page("1", "11"), Page("2", "22"))))
+    }
+
+    @Test
+    fun `can invalidate cache`() {
+        pagingDataSource.data().subscribe(observer1)
+        receiveInvalidatingInput(0)
+        pagingDataSource.getPage()
+
+        pagingDataSource.data().subscribe(observer2)
+        pagingDataSource.invalidate()
+        pagingDataSource.getPage()
+
+        pagingDataSource.data().subscribe(observer3)
+
+        observer1.assertValues(SoFarAllPagingData(listOf(Page("0", "00"))), NextPagePagingData(listOf(Page("0", "00"), Page("1", "11"))), SoFarAllPagingData(listOf(Page("0", "00"))))
+        observer2.assertValues(SoFarAllPagingData(listOf(Page("0", "00"), Page("1", "11"))), SoFarAllPagingData(listOf(Page("0", "00"))))
+        observer3.assertValues(SoFarAllPagingData(listOf(Page("0", "00"))))
     }
 
     private fun receiveInvalidatingInput(invalidatingInput: InvalidatingInput) = invalidatingInputRelay.accept(invalidatingInput)

@@ -33,28 +33,30 @@ class PagingDataSource<INVALIDATING_INPUT, PAGE_INPUT, DATA>(
                                     }
                         }
             }
-            .map { createPagingData(it) }
+            .map { createPagingData(it, false) }
             .doOnNext { isLoading.set(false) }
-            .startWith { Observable.just(createPagingData(pages.get())) }
             .share()
 
-    private fun createPagingData(pages: List<Page<PAGE_INPUT, DATA>>): PagingData<PAGE_INPUT, DATA> {
+    private fun createPagingData(pages: List<Page<PAGE_INPUT, DATA>>, isInitialSubscription: Boolean): PagingData<PAGE_INPUT, DATA> {
         val hasNext = hasNextPage(pages)
         return when {
-            pages.size == 1 && hasNext -> SoFarAllPagingData(pages)
-            pages.size == 1 && !hasNext -> AllPagingData(pages)
+            (pages.size == 1 || isInitialSubscription) && hasNext -> SoFarAllPagingData(pages)
+            (pages.size == 1 || isInitialSubscription) && !hasNext -> AllPagingData(pages)
             pages.size > 1 && hasNext -> NextPagePagingData(pages)
             else -> LastPagePagingData(pages)
         }
     }
 
-    fun nextPage() = nextPagesRelay.accept(Unit)
-    override fun data(): Observable<PagingData<PAGE_INPUT, DATA>> = pagingObservable
+    fun getPage() = nextPagesRelay.accept(Unit)
 
-    private fun invalidate() {
+    fun invalidate() {
         pages.set(emptyList())
         isLoading.set(false)
     }
+
+    override fun data(): Observable<PagingData<PAGE_INPUT, DATA>> =
+            if (pages.get().isNotEmpty()) pagingObservable.startWith(createPagingData(pages.get(), true))
+            else pagingObservable
 }
 
 data class Page<out INPUT, out DATA>(val input: INPUT, val data: DATA)
