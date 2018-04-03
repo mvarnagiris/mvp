@@ -9,15 +9,17 @@ class SingleSelectItemBehavior<in ITEM, VIEW : SingleSelectItemBehavior.View<ITE
         private val noItem: ITEM,
         private val getSelectedItem: () -> O<ITEM>,
         private val setSelectedItem: (ITEM) -> Unit,
-        private val schedulers: RxSchedulers) : Behavior<VIEW>() {
+        private val schedulers: RxSchedulers,
+        private val deselectOnDetach: Boolean = false) : Behavior<VIEW>() {
 
     constructor(
             item: ITEM,
             noItem: ITEM,
             selectedItemSource: DataSource<ITEM>,
             selectedItemWriter: DataWriter<ITEM>,
-            schedulers: RxSchedulers) :
-            this(item, noItem, selectedItemSource.function(), selectedItemWriter.function(), schedulers)
+            schedulers: RxSchedulers,
+            deselectOnDetach: Boolean = false) :
+            this(item, noItem, selectedItemSource.function(), selectedItemWriter.function(), schedulers, deselectOnDetach)
 
     override fun onViewAttached(view: VIEW) {
         super.onViewAttached(view)
@@ -37,7 +39,9 @@ class SingleSelectItemBehavior<in ITEM, VIEW : SingleSelectItemBehavior.View<ITE
 
     override fun onViewDetached(view: VIEW) {
         super.onViewDetached(view)
-        getSelectedItem().firstOrError().map { it }.subscribe { item -> if (item == this.item) setSelectedItem(noItem) }
+        if (deselectOnDetach) {
+            getSelectedItem().firstOrError().map { it }.subscribe { item -> if (item == this.item) setSelectedItem(noItem) }
+        }
     }
 
     private fun newSingleSelectState(item: ITEM): SingleSelectState = when (item) {
