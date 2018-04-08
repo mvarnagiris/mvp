@@ -13,3 +13,5 @@ fun <T, ERROR, VIEW : ErrorView<ERROR>> O<T>.showErrorAndComplete(view: VIEW, ma
         onErrorResumeNext { throwable: Throwable ->
             O.just(throwable).observeOn(schedulers.main).doOnNext { view.showError(mapError(it)) }.flatMap { (O.empty<T>()) }
         }
+
+fun <T, VIEW : ErrorView<Throwable>> O<T>.showErrorAndComplete(view: VIEW, schedulers: RxSchedulers = trampolines): O<T> = showErrorAndComplete(view, { it }, schedulers)

@@ -17,10 +17,11 @@ class InitializationBehavior<RESULT, in SUCCESS, in FAILURE, in ERROR, VIEW : In
     override fun onViewAttached(view: VIEW) {
         super.onViewAttached(view)
 
-        initialize().subscribeOn(schedulers.io)
+        initialize()
+                .subscribeOn(schedulers.io)
                 .showHideLoading(view, schedulers)
                 .doOnSuccess { if (isSuccess(it)) view.displayInitialized(getSuccess(it)) else view.displayNotInitialized(getFailure(it)) }
-                .retryWhen { it.flatMap { view.showResolvableError(mapError(it)).filter { it == ErrorResolution.POSITIVE }.toFlowable() } }
+                .resolveErrorOrFail(view, mapError, schedulers)
                 .subscribeUntilDetached({ view.close() }, { view.showError(mapError(it)) })
     }
 
