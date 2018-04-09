@@ -17,6 +17,11 @@ class InitializationBehaviorTest {
     private val error = Throwable()
 
     @Test
+    fun behavior() {
+        testInitializationBehavior(result, success, failure, error, createPresenter())
+    }
+
+    @Test
     fun `displays initialized when initialization succeeds`() {
         testDisplaysInitializedWhenInitializationSucceeds(result, success, createPresenter())
     }
