@@ -22,6 +22,7 @@ class InitializationBehavior<RESULT, in SUCCESS, in FAILURE, in ERROR, VIEW : In
                 .showHideLoading(view, schedulers)
                 .doOnSuccess { if (isSuccess(it)) view.displayInitialized(getSuccess(it)) else view.displayNotInitialized(getFailure(it)) }
                 .resolveErrorOrFail(view, mapError, schedulers)
+                .observeOn(schedulers.main)
                 .subscribeUntilDetached({ view.close() }, { view.showError(mapError(it)) })
     }
 
