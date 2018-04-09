@@ -24,5 +24,6 @@ dependencies {
     compile 'com.github.memoizr:assertk-core:1.0.0-beta.2'
     compile "org.jetbrains.kotlin:kotlin-test:$kotlin_version"
     compile "com.nhaarman.mockitokotlin2:mockito-kotlin:2.0.0-alpha03"
+    compile "org.mockito:mockito-inline:2.13.0"
     compile 'com.github.random-object-kreator:random-object-kreator:v0.2.2-alpha'
 }

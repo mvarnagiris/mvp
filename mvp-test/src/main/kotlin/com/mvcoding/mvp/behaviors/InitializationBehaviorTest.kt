@@ -7,23 +7,19 @@ import com.nhaarman.mockitokotlin2.mock
 import com.nhaarman.mockitokotlin2.whenever
 import io.reactivex.Single
 
-inline fun <RESULT, SUCCESS, FAILURE, ERROR, reified VIEW : InitializationBehavior.View<SUCCESS, FAILURE, ERROR>> testInitializationBehavior(
-        result: RESULT,
-        success: SUCCESS,
-        failure: FAILURE,
-        error: ERROR,
+inline fun <reified RESULT : Any, reified SUCCESS : Any, reified FAILURE : Any, reified ERROR : Any, reified VIEW : InitializationBehavior.View<SUCCESS, FAILURE, ERROR>> testInitializationBehavior(
         createPresenter: (() -> Single<RESULT>, (RESULT) -> Boolean, (RESULT) -> SUCCESS, (RESULT) -> FAILURE, (Throwable) -> ERROR) -> Presenter<VIEW>) {
-    testDisplaysInitializedWhenInitializationSucceeds(result, success, createPresenter)
-    testDisplaysNotInitializedWhenInitializationFails(result, failure, createPresenter)
-    testProceedsIfErrorIsResolved(result, success, error, createPresenter)
-    testShowsErrorIfErrorIsNotResolved(error, createPresenter)
+    testDisplaysInitializedWhenInitializationSucceeds(createPresenter)
+    testDisplaysNotInitializedWhenInitializationFails(createPresenter)
+    testProceedsIfErrorIsResolved(createPresenter)
+    testShowsErrorIfErrorIsNotResolved(createPresenter)
 }
 
-inline fun <RESULT, SUCCESS, FAILURE, ERROR, reified VIEW : InitializationBehavior.View<SUCCESS, FAILURE, ERROR>> testDisplaysInitializedWhenInitializationSucceeds(
-        result: RESULT,
-        success: SUCCESS,
+inline fun <reified RESULT : Any, reified SUCCESS : Any, reified FAILURE : Any, reified ERROR : Any, reified VIEW : InitializationBehavior.View<SUCCESS, FAILURE, ERROR>> testDisplaysInitializedWhenInitializationSucceeds(
         createPresenter: (() -> Single<RESULT>, (RESULT) -> Boolean, (RESULT) -> SUCCESS, (RESULT) -> FAILURE, (Throwable) -> ERROR) -> Presenter<VIEW>) {
 
+    val result = mock<RESULT>()
+    val success = mock<SUCCESS>()
     val initialize = mock<() -> Single<RESULT>>()
     val isSuccess = mock<(RESULT) -> Boolean>()
     val getSuccess = mock<(RESULT) -> SUCCESS>()
@@ -44,11 +40,11 @@ inline fun <RESULT, SUCCESS, FAILURE, ERROR, reified VIEW : InitializationBehavi
     }
 }
 
-inline fun <RESULT, SUCCESS, FAILURE, ERROR, reified VIEW : InitializationBehavior.View<SUCCESS, FAILURE, ERROR>> testDisplaysNotInitializedWhenInitializationFails(
-        result: RESULT,
-        failure: FAILURE,
+inline fun <reified RESULT : Any, reified SUCCESS : Any, reified FAILURE : Any, reified ERROR : Any, reified VIEW : InitializationBehavior.View<SUCCESS, FAILURE, ERROR>> testDisplaysNotInitializedWhenInitializationFails(
         createPresenter: (() -> Single<RESULT>, (RESULT) -> Boolean, (RESULT) -> SUCCESS, (RESULT) -> FAILURE, (Throwable) -> ERROR) -> Presenter<VIEW>) {
 
+    val result = mock<RESULT>()
+    val failure = mock<FAILURE>()
     val initialize = mock<() -> Single<RESULT>>()
     val isSuccess = mock<(RESULT) -> Boolean>()
     val getFailure = mock<(RESULT) -> FAILURE>()
@@ -69,12 +65,12 @@ inline fun <RESULT, SUCCESS, FAILURE, ERROR, reified VIEW : InitializationBehavi
     }
 }
 
-inline fun <RESULT, SUCCESS, FAILURE, ERROR, reified VIEW : InitializationBehavior.View<SUCCESS, FAILURE, ERROR>> testProceedsIfErrorIsResolved(
-        result: RESULT,
-        success: SUCCESS,
-        error: ERROR,
+inline fun <reified RESULT : Any, reified SUCCESS : Any, reified FAILURE : Any, reified ERROR : Any, reified VIEW : InitializationBehavior.View<SUCCESS, FAILURE, ERROR>> testProceedsIfErrorIsResolved(
         createPresenter: (() -> Single<RESULT>, (RESULT) -> Boolean, (RESULT) -> SUCCESS, (RESULT) -> FAILURE, (Throwable) -> ERROR) -> Presenter<VIEW>) {
 
+    val result = mock<RESULT>()
+    val success = mock<SUCCESS>()
+    val error = mock<ERROR>()
     val throwable = Throwable()
     val initialize = mock<() -> Single<RESULT>>()
     val isSuccess = mock<(RESULT) -> Boolean>()
@@ -107,10 +103,10 @@ inline fun <RESULT, SUCCESS, FAILURE, ERROR, reified VIEW : InitializationBehavi
     }
 }
 
-inline fun <RESULT, SUCCESS, FAILURE, ERROR, reified VIEW : InitializationBehavior.View<SUCCESS, FAILURE, ERROR>> testShowsErrorIfErrorIsNotResolved(
-        error: ERROR,
+inline fun <reified RESULT : Any, reified SUCCESS : Any, reified FAILURE : Any, reified ERROR : Any, reified VIEW : InitializationBehavior.View<SUCCESS, FAILURE, ERROR>> testShowsErrorIfErrorIsNotResolved(
         createPresenter: (() -> Single<RESULT>, (RESULT) -> Boolean, (RESULT) -> SUCCESS, (RESULT) -> FAILURE, (Throwable) -> ERROR) -> Presenter<VIEW>) {
 
+    val error = mock<ERROR>()
     val throwable = Throwable()
     val initialize = mock<() -> Single<RESULT>>()
     val mapError = mock<(Throwable) -> ERROR>()

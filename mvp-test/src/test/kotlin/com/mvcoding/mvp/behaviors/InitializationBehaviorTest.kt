@@ -6,37 +6,32 @@ import org.junit.Test
 
 class InitializationBehaviorTest {
 
-    private val result = 1
-    private val success = 2
-    private val failure = 3
-    private val error = Throwable()
-
     @Test
     fun behavior() {
-        testInitializationBehavior(result, success, failure, error, createPresenter())
+        testInitializationBehavior(createPresenter())
     }
 
     @Test
     fun `displays initialized when initialization succeeds`() {
-        testDisplaysInitializedWhenInitializationSucceeds(result, success, createPresenter())
+        testDisplaysInitializedWhenInitializationSucceeds(createPresenter())
     }
 
     @Test
     fun `displays not initialized when initialization fails`() {
-        testDisplaysNotInitializedWhenInitializationFails(result, failure, createPresenter())
+        testDisplaysNotInitializedWhenInitializationFails(createPresenter())
     }
 
     @Test
     fun `proceeds if error is resolved`() {
-        testProceedsIfErrorIsResolved(result, success, error, createPresenter())
+        testProceedsIfErrorIsResolved(createPresenter())
     }
 
     @Test
     fun `shows error if error is not resolved`() {
-        testShowsErrorIfErrorIsNotResolved(error, createPresenter())
+        testShowsErrorIfErrorIsNotResolved(createPresenter())
     }
 
-    private fun createPresenter(): (() -> Single<Int>, (Int) -> Boolean, (Int) -> Int, (Int) -> Int, (Throwable) -> Throwable) -> InitializationBehavior<Int, Int, Int, Throwable, InitializationBehavior.View<Int, Int, Throwable>> {
+    private fun createPresenter(): (() -> Single<Any>, (Any) -> Boolean, (Any) -> Any, (Any) -> Any, (Throwable) -> Throwable) -> InitializationBehavior<Any, Any, Any, Throwable, InitializationBehavior.View<Any, Any, Throwable>> {
         return { initialize, isSuccess, getSuccess, getFailure, mapError -> InitializationBehavior(initialize, isSuccess, getSuccess, getFailure, mapError, trampolines) }
     }
 }
