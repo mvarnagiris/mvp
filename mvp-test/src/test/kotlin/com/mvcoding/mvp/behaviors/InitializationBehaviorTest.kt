@@ -1,42 +1,49 @@
 package com.mvcoding.mvp.behaviors
 
+import com.mvcoding.mvp.Presenter
 import com.mvcoding.mvp.trampolines
 import io.reactivex.Single
 import org.junit.Test
 
-class InitializationBehaviorTest {
+private val success = 2
+private val failure = 3
+private val error = Throwable()
 
-    private val result = 1
-    private val success = 2
-    private val failure = 3
-    private val error = Throwable()
+class InitializationBehaviorTest {
 
     @Test
     fun behavior() {
-        testInitializationBehavior(result, success, failure, error, createPresenter())
+        testInitializationBehavior({ Pres(it) }, success, failure, error) { appUser: AppUser -> appUser.isLoggedIn() }
     }
 
     @Test
     fun `displays initialized when initialization succeeds`() {
-        testDisplaysInitializedWhenInitializationSucceeds(result, success, createPresenter())
+        testDisplaysInitializedWhenInitializationSucceeds(success, { Pres(it) }) { appUser: AppUser -> appUser.isLoggedIn() }
     }
 
     @Test
     fun `displays not initialized when initialization fails`() {
-        testDisplaysNotInitializedWhenInitializationFails(result, failure, createPresenter())
+        testDisplaysNotInitializedWhenInitializationFails(failure, { Pres(it) }) { appUser: AppUser -> appUser.isLoggedIn() }
     }
 
     @Test
     fun `proceeds if error is resolved`() {
-        testProceedsIfErrorIsResolved(result, success, error, createPresenter())
+        testProceedsIfErrorIsResolved(success, { Pres(it) }) { appUser: AppUser -> appUser.isLoggedIn() }
     }
 
     @Test
     fun `shows error if error is not resolved`() {
-        testShowsErrorIfErrorIsNotResolved(error, createPresenter())
+        testShowsErrorIfErrorIsNotResolved(error) { it: () -> Single<AppUser> -> Pres(it) }
     }
 
-    private fun createPresenter(): (() -> Single<Int>, (Int) -> Boolean, (Int) -> Int, (Int) -> Int, (Throwable) -> Throwable) -> InitializationBehavior<Int, Int, Int, Throwable, InitializationBehavior.View<Int, Int, Throwable>> {
-        return { initialize, isSuccess, getSuccess, getFailure, mapError -> InitializationBehavior(initialize, isSuccess, getSuccess, getFailure, mapError, trampolines) }
+    class Pres(getAppUser: () -> Single<AppUser>) : Presenter<Pres.View>(
+            InitializationBehavior(getAppUser, { it.isLoggedIn() }, { success }, { failure }, { error }, trampolines)) {
+
+        interface View : InitializationBehavior.View<Int, Int, Throwable>
+    }
+
+    interface AppUser {
+        fun isLoggedIn(): Boolean
+        fun isLoggedOut(): Boolean
     }
 }
