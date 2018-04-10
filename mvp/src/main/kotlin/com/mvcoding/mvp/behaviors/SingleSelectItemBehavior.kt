@@ -24,7 +24,10 @@ class SingleSelectItemBehavior<in ITEM, VIEW : SingleSelectItemBehavior.View<ITE
     override fun onViewAttached(view: VIEW) {
         super.onViewAttached(view)
 
-        val singleSelectStateObservable = getSelectedItem().map { newSingleSelectState(it) }
+        val singleSelectStateObservable = getSelectedItem()
+                .subscribeOn(schedulers.io)
+                .map { newSingleSelectState(it) }
+                .share()
 
         singleSelectStateObservable
                 .distinctUntilChanged()
@@ -33,7 +36,7 @@ class SingleSelectItemBehavior<in ITEM, VIEW : SingleSelectItemBehavior.View<ITE
 
         view.selects()
                 .withLatestFrom(singleSelectStateObservable) { _, singleSelectState -> if (singleSelectState == ThisSelected) noItem else item }
-                .observeOn(schedulers.computation)
+                .observeOn(schedulers.io)
                 .subscribeUntilDetached { setSelectedItem(it) }
     }
 
