@@ -25,18 +25,18 @@ class SingleSelectItemBehavior<in ITEM, VIEW : SingleSelectItemBehavior.View<ITE
         super.onViewAttached(view)
 
         val singleSelectStateObservable = getSelectedItem()
-                .subscribeOn(schedulers.io)
                 .map { newSingleSelectState(it) }
                 .share()
 
         singleSelectStateObservable
+                .subscribeOn(schedulers.io)
                 .distinctUntilChanged()
                 .observeOn(schedulers.main)
                 .subscribeUntilDetached { showSingleSelectState(view, it) }
 
         view.selects()
-                .withLatestFrom(singleSelectStateObservable) { _, singleSelectState -> if (singleSelectState == ThisSelected) noItem else item }
                 .observeOn(schedulers.io)
+                .withLatestFrom(singleSelectStateObservable) { _, singleSelectState -> if (singleSelectState == ThisSelected) noItem else item }
                 .subscribeUntilDetached { setSelectedItem(it) }
     }
 
