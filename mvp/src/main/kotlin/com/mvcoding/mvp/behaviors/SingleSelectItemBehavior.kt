@@ -33,7 +33,7 @@ class SingleSelectItemBehavior<in ITEM, VIEW : SingleSelectItemBehavior.View<ITE
 
         view.selects()
                 .withLatestFrom(singleSelectStateObservable) { _, singleSelectState -> if (singleSelectState == ThisSelected) noItem else item }
-                .observeOn(schedulers.main)
+                .observeOn(schedulers.computation)
                 .subscribeUntilDetached { setSelectedItem(it) }
     }
 
