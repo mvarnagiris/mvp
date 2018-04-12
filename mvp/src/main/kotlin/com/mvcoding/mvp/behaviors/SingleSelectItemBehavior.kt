@@ -26,7 +26,6 @@ class SingleSelectItemBehavior<in ITEM, VIEW : SingleSelectItemBehavior.View<ITE
 
         val singleSelectStateObservable = getSelectedItem()
                 .map { newSingleSelectState(it) }
-                .share()
 
         singleSelectStateObservable
                 .subscribeOn(schedulers.io)
