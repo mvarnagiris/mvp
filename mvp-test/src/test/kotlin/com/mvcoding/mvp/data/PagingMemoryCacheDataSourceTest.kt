@@ -17,7 +17,7 @@ class PagingDataSourceTest {
     private val getPage = mock<(PageInput) -> Single<Data>>()
     private val getNextPageInput = mock<(InvalidatingInput, List<Page<PageInput, Data>>) -> Single<PageInput>>()
     private val hasNextPage = mock<(List<Page<PageInput, Data>>) -> Boolean>()
-    private val pagingDataSource = PagingMemoryCacheDataSource(getInvalidatingInput, getPage, getNextPageInput, hasNextPage)
+    private val pagingDataSource = PagingMemoryDataSource(getInvalidatingInput, getPage, getNextPageInput, hasNextPage)
     private val observer1 = TestObserver.create<PagingData<PageInput, Data>>()
     private val observer2 = TestObserver.create<PagingData<PageInput, Data>>()
     private val observer3 = TestObserver.create<PagingData<PageInput, Data>>()

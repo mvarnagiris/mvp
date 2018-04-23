@@ -7,7 +7,7 @@ import io.reactivex.Single
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicReference
 
-class PagingMemoryCacheDataSource<INVALIDATING_INPUT, PAGE_INPUT, DATA>(
+class PagingMemoryDataSource<INVALIDATING_INPUT, PAGE_INPUT, DATA>(
         getInvalidatingInput: () -> Observable<INVALIDATING_INPUT>,
         private val getPage: (PAGE_INPUT) -> Single<DATA>,
         private val getNextPageInput: (INVALIDATING_INPUT, List<Page<PAGE_INPUT, DATA>>) -> Single<PAGE_INPUT>,

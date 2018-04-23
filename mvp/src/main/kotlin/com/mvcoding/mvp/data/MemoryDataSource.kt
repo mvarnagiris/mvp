@@ -13,3 +13,4 @@ class MemoryDataSource<DATA>(dataSource: DataSource<DATA>) : DataSource<DATA> {
 
 fun <DATA> DataSource<DATA>.memoryDataSource() = MemoryDataSource(this)
 fun <DATA> (() -> O<DATA>).memoryDataSource() = MemoryDataSource(this)
+fun <DATA> O<DATA>.memoryDataSource() = this.dataSource().memoryDataSource()
