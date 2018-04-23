@@ -2,131 +2,121 @@ package com.mvcoding.mvp.behaviors
 
 import com.mvcoding.mvp.Presenter
 import com.mvcoding.mvp.views.ErrorResolution
-import com.nhaarman.mockitokotlin2.inOrder
-import com.nhaarman.mockitokotlin2.mock
-import com.nhaarman.mockitokotlin2.whenever
+import com.nhaarman.mockitokotlin2.*
 import io.reactivex.Single
 
 inline fun <RESULT, SUCCESS, FAILURE, ERROR, reified VIEW : InitializationBehavior.View<SUCCESS, FAILURE, ERROR>> testInitializationBehavior(
-        result: RESULT,
-        success: SUCCESS,
-        failure: FAILURE,
-        error: ERROR,
-        createPresenter: (() -> Single<RESULT>, (RESULT) -> Boolean, (RESULT) -> SUCCESS, (RESULT) -> FAILURE, (Throwable) -> ERROR) -> Presenter<VIEW>) {
-    testDisplaysInitializedWhenInitializationSucceeds(result, success, createPresenter)
-    testDisplaysNotInitializedWhenInitializationFails(result, failure, createPresenter)
-    testProceedsIfErrorIsResolved(result, success, error, createPresenter)
-    testShowsErrorIfErrorIsNotResolved(error, createPresenter)
+        successResult: RESULT,
+        failureResult: RESULT,
+        crossinline getSuccess: (RESULT) -> SUCCESS,
+        crossinline getFailure: (RESULT) -> FAILURE,
+        crossinline mapError: (Throwable) -> ERROR,
+        createPresenter: (() -> Single<RESULT>) -> Presenter<VIEW>) {
+    testDisplaysInitializedWhenInitializationSucceeds(successResult, getSuccess, createPresenter)
+    testDisplaysNotInitializedWhenInitializationFails(failureResult, getFailure, createPresenter)
+    testProceedsIfErrorIsResolved(successResult, mapError, createPresenter)
+    testShowsErrorIfErrorIsNotResolved(mapError, createPresenter)
 }
 
-inline fun <RESULT, SUCCESS, FAILURE, ERROR, reified VIEW : InitializationBehavior.View<SUCCESS, FAILURE, ERROR>> testDisplaysInitializedWhenInitializationSucceeds(
+inline fun <RESULT, SUCCESS, reified VIEW : InitializationBehavior.View<SUCCESS, *, *>> testDisplaysInitializedWhenInitializationSucceeds(
         result: RESULT,
-        success: SUCCESS,
-        createPresenter: (() -> Single<RESULT>, (RESULT) -> Boolean, (RESULT) -> SUCCESS, (RESULT) -> FAILURE, (Throwable) -> ERROR) -> Presenter<VIEW>) {
+        crossinline getSuccess: (RESULT) -> SUCCESS,
+        createPresenter: (() -> Single<RESULT>) -> Presenter<VIEW>) {
 
-    val initialize = mock<() -> Single<RESULT>>()
-    val isSuccess = mock<(RESULT) -> Boolean>()
-    val getSuccess = mock<(RESULT) -> SUCCESS>()
-    whenever(initialize()).thenReturn(Single.just(result))
-    whenever(isSuccess(result)).thenReturn(true)
-    whenever(getSuccess(result)).thenReturn(success)
-
-    val presenter = createPresenter(initialize, isSuccess, getSuccess, mock(), mock())
     val view = mock<VIEW>()
+    val initialize = mock<() -> Single<RESULT>>()
+    whenever(initialize()).thenReturn(Single.just(result))
+    val presenter = createPresenter(initialize)
 
     presenter attach view
 
+    verify(view).showLoading()
+    verify(view).hideLoading()
+    verify(view).displayInitialized(getSuccess(result))
+    verify(view).close()
     inOrder(view) {
         verify(view).showLoading()
         verify(view).hideLoading()
-        verify(view).displayInitialized(success)
+        verify(view).displayInitialized(getSuccess(result))
         verify(view).close()
     }
 }
 
-inline fun <RESULT, SUCCESS, FAILURE, ERROR, reified VIEW : InitializationBehavior.View<SUCCESS, FAILURE, ERROR>> testDisplaysNotInitializedWhenInitializationFails(
+inline fun <RESULT, FAILURE, reified VIEW : InitializationBehavior.View<*, FAILURE, *>> testDisplaysNotInitializedWhenInitializationFails(
         result: RESULT,
-        failure: FAILURE,
-        createPresenter: (() -> Single<RESULT>, (RESULT) -> Boolean, (RESULT) -> SUCCESS, (RESULT) -> FAILURE, (Throwable) -> ERROR) -> Presenter<VIEW>) {
+        crossinline getFailure: (RESULT) -> FAILURE,
+        createPresenter: (() -> Single<RESULT>) -> Presenter<VIEW>) {
 
-    val initialize = mock<() -> Single<RESULT>>()
-    val isSuccess = mock<(RESULT) -> Boolean>()
-    val getFailure = mock<(RESULT) -> FAILURE>()
-    whenever(initialize()).thenReturn(Single.just(result))
-    whenever(isSuccess(result)).thenReturn(false)
-    whenever(getFailure(result)).thenReturn(failure)
-
-    val presenter = createPresenter(initialize, isSuccess, mock(), getFailure, mock())
     val view = mock<VIEW>()
+    val initialize = mock<() -> Single<RESULT>>()
+    whenever(initialize()).thenReturn(Single.just(result))
+    val presenter = createPresenter(initialize)
 
     presenter attach view
 
+    verify(view).showLoading()
+    verify(view).hideLoading()
+    verify(view).displayNotInitialized(getFailure(result))
+    verify(view).close()
     inOrder(view) {
         verify(view).showLoading()
         verify(view).hideLoading()
-        verify(view).displayNotInitialized(failure)
+        verify(view).displayNotInitialized(getFailure(result))
         verify(view).close()
     }
 }
 
-inline fun <RESULT, SUCCESS, FAILURE, ERROR, reified VIEW : InitializationBehavior.View<SUCCESS, FAILURE, ERROR>> testProceedsIfErrorIsResolved(
+inline fun <RESULT, ERROR, reified VIEW : InitializationBehavior.View<*, *, ERROR>> testProceedsIfErrorIsResolved(
         result: RESULT,
-        success: SUCCESS,
-        error: ERROR,
-        createPresenter: (() -> Single<RESULT>, (RESULT) -> Boolean, (RESULT) -> SUCCESS, (RESULT) -> FAILURE, (Throwable) -> ERROR) -> Presenter<VIEW>) {
+        crossinline mapError: (Throwable) -> ERROR,
+        createPresenter: (() -> Single<RESULT>) -> Presenter<VIEW>) {
 
     val throwable = Throwable()
-    val initialize = mock<() -> Single<RESULT>>()
-    val isSuccess = mock<(RESULT) -> Boolean>()
-    val getSuccess = mock<(RESULT) -> SUCCESS>()
-    val mapError = mock<(Throwable) -> ERROR>()
     val view = mock<VIEW>()
+    val initialize = mock<() -> Single<RESULT>>()
     var value = -1
-    val single = Single.create<RESULT> {
-        if (value++ == -1) it.onError(throwable)
-        else it.onSuccess(result)
-    }
-    whenever(isSuccess(result)).thenReturn(true)
-    whenever(getSuccess(result)).thenReturn(success)
-    whenever(initialize()).thenReturn(single)
-    whenever(mapError(throwable)).thenReturn(error)
-    whenever(view.showResolvableError(error)).thenReturn(Single.just(ErrorResolution.POSITIVE))
-
-    val presenter = createPresenter(initialize, isSuccess, getSuccess, mock(), mapError)
+    val initializeResult = Single.create<RESULT> { if (value++ == -1) it.onError(throwable) else it.onSuccess(result) }
+    whenever(initialize()).thenReturn(initializeResult)
+    whenever(view.showResolvableError(mapError(throwable))).thenReturn(Single.just(ErrorResolution.POSITIVE))
+    val presenter = createPresenter(initialize)
 
     presenter attach view
 
+    verify(view).showResolvableError(mapError(throwable))
+    verify(view, times(2)).showLoading()
+    verify(view, times(2)).hideLoading()
+    verify(view).close()
     inOrder(view) {
         verify(view).showLoading()
         verify(view).hideLoading()
-        verify(view).showResolvableError(error)
+        verify(view).showResolvableError(mapError(throwable))
         verify(view).showLoading()
         verify(view).hideLoading()
-        verify(view).displayInitialized(success)
         verify(view).close()
     }
 }
 
 inline fun <RESULT, SUCCESS, FAILURE, ERROR, reified VIEW : InitializationBehavior.View<SUCCESS, FAILURE, ERROR>> testShowsErrorIfErrorIsNotResolved(
-        error: ERROR,
-        createPresenter: (() -> Single<RESULT>, (RESULT) -> Boolean, (RESULT) -> SUCCESS, (RESULT) -> FAILURE, (Throwable) -> ERROR) -> Presenter<VIEW>) {
+        crossinline mapError: (Throwable) -> ERROR,
+        createPresenter: (() -> Single<RESULT>) -> Presenter<VIEW>) {
 
     val throwable = Throwable()
-    val initialize = mock<() -> Single<RESULT>>()
-    val mapError = mock<(Throwable) -> ERROR>()
     val view = mock<VIEW>()
+    val initialize = mock<() -> Single<RESULT>>()
     whenever(initialize()).thenReturn(Single.error(throwable))
-    whenever(mapError(throwable)).thenReturn(error)
-    whenever(view.showResolvableError(error)).thenReturn(Single.just(ErrorResolution.NEGATIVE))
-
-    val presenter = createPresenter(initialize, mock(), mock(), mock(), mapError)
+    whenever(view.showResolvableError(mapError(throwable))).thenReturn(Single.just(ErrorResolution.NEGATIVE))
+    val presenter = createPresenter(initialize)
 
     presenter attach view
 
+    verify(view).showResolvableError(mapError(throwable))
+    verify(view).showError(mapError(throwable))
+    verify(view).showLoading()
+    verify(view).hideLoading()
     inOrder(view) {
         verify(view).showLoading()
         verify(view).hideLoading()
-        verify(view).showResolvableError(error)
-        verify(view).showError(error)
+        verify(view).showResolvableError(mapError(throwable))
+        verify(view).showError(mapError(throwable))
     }
 }
