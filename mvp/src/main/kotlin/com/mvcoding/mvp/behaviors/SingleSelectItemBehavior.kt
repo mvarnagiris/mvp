@@ -19,7 +19,7 @@ class SingleSelectItemBehavior<in ITEM, VIEW : SingleSelectItemBehavior.View<ITE
             selectedItemWriter: DataWriter<ITEM>,
             schedulers: RxSchedulers,
             deselectOnDetach: Boolean = false) :
-            this(item, noItem, selectedItemSource.function(), selectedItemWriter.function(), schedulers, deselectOnDetach)
+            this(item, noItem, selectedItemSource.functionDataSource(), selectedItemWriter.functionDataWriter(), schedulers, deselectOnDetach)
 
     override fun onViewAttached(view: VIEW) {
         super.onViewAttached(view)

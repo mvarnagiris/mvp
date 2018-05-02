@@ -2,7 +2,7 @@ group 'mvcoding'
 version '2.0.0-alpha10'
 
 buildscript {
-    ext.kotlin_version = '1.2.31'
+    ext.kotlin_version = '1.2.41'
     repositories {
         mavenCentral()
     }

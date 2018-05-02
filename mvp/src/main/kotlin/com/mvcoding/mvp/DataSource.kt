@@ -6,4 +6,4 @@ interface DataSource<DATA> {
     fun data(): Observable<DATA>
 }
 
-fun <DATA> DataSource<DATA>.function(): () -> O<DATA> = { data() }
+fun <DATA> DataSource<DATA>.functionDataSource(): () -> O<DATA> = { data() }
