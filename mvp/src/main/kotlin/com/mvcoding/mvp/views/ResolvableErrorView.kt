@@ -2,7 +2,6 @@ package com.mvcoding.mvp.views
 
 import com.mvcoding.mvp.Presenter
 import com.mvcoding.mvp.RxSchedulers
-import com.mvcoding.mvp.S
 import com.mvcoding.mvp.trampolines
 import io.reactivex.Flowable
 import io.reactivex.Single
@@ -13,7 +12,7 @@ interface ResolvableErrorView<in ERROR> : Presenter.View {
 
 enum class ErrorResolution { POSITIVE, NEGATIVE }
 
-fun <T, ERROR, VIEW : ResolvableErrorView<ERROR>> S<T>.resolveErrorOrFail(view: VIEW, mapError: (Throwable) -> ERROR, schedulers: RxSchedulers = trampolines): S<T> =
+fun <T, ERROR, VIEW : ResolvableErrorView<ERROR>> Single<T>.resolveErrorOrFail(view: VIEW, mapError: (Throwable) -> ERROR, schedulers: RxSchedulers = trampolines): Single<T> =
         retryWhen {
             it.observeOn(schedulers.main).switchMap { throwable ->
                 view.showResolvableError(mapError(throwable)).flatMapPublisher {
@@ -23,4 +22,4 @@ fun <T, ERROR, VIEW : ResolvableErrorView<ERROR>> S<T>.resolveErrorOrFail(view: 
             }
         }
 
-fun <T, VIEW : ResolvableErrorView<Throwable>> S<T>.resolveErrorOrFail(view: VIEW, schedulers: RxSchedulers = trampolines): S<T> = resolveErrorOrFail(view, { it }, schedulers)
+fun <T, VIEW : ResolvableErrorView<Throwable>> Single<T>.resolveErrorOrFail(view: VIEW, schedulers: RxSchedulers = trampolines): Single<T> = resolveErrorOrFail(view, { it }, schedulers)

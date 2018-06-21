@@ -1,7 +1,6 @@
 package com.mvcoding.mvp.behaviors
 
 import com.jakewharton.rxrelay2.PublishRelay
-import com.mvcoding.mvp.O
 import com.mvcoding.mvp.Presenter
 import com.mvcoding.mvp.trampolines
 import com.nhaarman.mockitokotlin2.mock
@@ -34,7 +33,7 @@ class SingleSelectItemBehaviorTest {
 
     @Test
     fun `sets item not selected on detach when this item was selected`() {
-        testSetsItemNotSelectedOnDetachWhenThisItemWasSelected(item, noItem, createPresenter())
+        testSetsItemNotSelectedOnDetachWhenThisItemWasSelected(item, noItem, createPresenter(true))
     }
 
     @Test
@@ -62,8 +61,8 @@ class SingleSelectItemBehaviorTest {
         testShowsThisSelectedWhenThisItemIsSelected(item, createPresenter())
     }
 
-    private fun createPresenter(): (() -> O<String>, (String) -> Unit) -> SingleSelectItemBehavior<String, SingleSelectItemBehavior.View<String>> {
-        return { get, set -> SingleSelectItemBehavior(item, noItem, get, set, trampolines) }
+    private fun createPresenter(deselectOnDetach: Boolean = false): (() -> Observable<String>, (String) -> Unit) -> SingleSelectItemBehavior<String, SingleSelectItemBehavior.View<String>> {
+        return { get, set -> SingleSelectItemBehavior(item, noItem, get, set, trampolines, deselectOnDetach) }
     }
 }
 
@@ -71,7 +70,7 @@ inline fun <ITEM : Any, reified VIEW : SingleSelectItemBehavior.View<ITEM>> test
         item: ITEM,
         noItem: ITEM,
         otherItem: ITEM,
-        createPresenter: (() -> O<ITEM>, (ITEM) -> Unit) -> Presenter<VIEW>) {
+        createPresenter: (() -> Observable<ITEM>, (ITEM) -> Unit) -> Presenter<VIEW>) {
 
     testSetsItemSelectedAfterSelectWhenNothingWasSelectedYet(item, noItem, createPresenter)
     testSetsItemSelectedAfterSelectWhenOtherItemWasSelected(item, otherItem, createPresenter)
@@ -87,14 +86,14 @@ inline fun <ITEM : Any, reified VIEW : SingleSelectItemBehavior.View<ITEM>> test
 inline fun <ITEM, reified VIEW : SingleSelectItemBehavior.View<ITEM>> testSetsItemSelectedAfterSelectWhenNothingWasSelectedYet(
         item: ITEM,
         noItem: ITEM,
-        createPresenter: (() -> O<ITEM>, (ITEM) -> Unit) -> Presenter<VIEW>) {
-    val getSelectedItem = mock<() -> O<ITEM>>()
+        createPresenter: (() -> Observable<ITEM>, (ITEM) -> Unit) -> Presenter<VIEW>) {
+    val getSelectedItem = mock<() -> Observable<ITEM>>()
     val setSelectedItem = mock<(ITEM) -> Unit>()
     val selectsRelay = PublishRelay.create<Unit>()
     val presenter = createPresenter(getSelectedItem, setSelectedItem)
     val view = view<ITEM, VIEW>()
     whenever(view.selects()).thenReturn(selectsRelay)
-    whenever(getSelectedItem()).thenReturn(O.just(noItem))
+    whenever(getSelectedItem()).thenReturn(Observable.just(noItem))
     presenter attach view
 
     selectsRelay.accept(Unit)
@@ -105,14 +104,14 @@ inline fun <ITEM, reified VIEW : SingleSelectItemBehavior.View<ITEM>> testSetsIt
 inline fun <ITEM, reified VIEW : SingleSelectItemBehavior.View<ITEM>> testSetsItemSelectedAfterSelectWhenOtherItemWasSelected(
         item: ITEM,
         otherItem: ITEM,
-        createPresenter: (() -> O<ITEM>, (ITEM) -> Unit) -> Presenter<VIEW>) {
-    val getSelectedItem = mock<() -> O<ITEM>>()
+        createPresenter: (() -> Observable<ITEM>, (ITEM) -> Unit) -> Presenter<VIEW>) {
+    val getSelectedItem = mock<() -> Observable<ITEM>>()
     val setSelectedItem = mock<(ITEM) -> Unit>()
     val selectsRelay = PublishRelay.create<Unit>()
     val presenter = createPresenter(getSelectedItem, setSelectedItem)
     val view = view<ITEM, VIEW>()
     whenever(view.selects()).thenReturn(selectsRelay)
-    whenever(getSelectedItem()).thenReturn(O.just(otherItem))
+    whenever(getSelectedItem()).thenReturn(Observable.just(otherItem))
     presenter attach view
 
     selectsRelay.accept(Unit)
@@ -123,14 +122,14 @@ inline fun <ITEM, reified VIEW : SingleSelectItemBehavior.View<ITEM>> testSetsIt
 inline fun <ITEM, reified VIEW : SingleSelectItemBehavior.View<ITEM>> testSetsItemNotSelectedAfterSelectWhenThisItemWasSelected(
         item: ITEM,
         noItem: ITEM,
-        createPresenter: (() -> O<ITEM>, (ITEM) -> Unit) -> Presenter<VIEW>) {
-    val getSelectedItem = mock<() -> O<ITEM>>()
+        createPresenter: (() -> Observable<ITEM>, (ITEM) -> Unit) -> Presenter<VIEW>) {
+    val getSelectedItem = mock<() -> Observable<ITEM>>()
     val setSelectedItem = mock<(ITEM) -> Unit>()
     val selectsRelay = PublishRelay.create<Unit>()
     val presenter = createPresenter(getSelectedItem, setSelectedItem)
     val view = view<ITEM, VIEW>()
     whenever(view.selects()).thenReturn(selectsRelay)
-    whenever(getSelectedItem()).thenReturn(O.just(item))
+    whenever(getSelectedItem()).thenReturn(Observable.just(item))
     presenter attach view
 
     selectsRelay.accept(Unit)
@@ -141,12 +140,12 @@ inline fun <ITEM, reified VIEW : SingleSelectItemBehavior.View<ITEM>> testSetsIt
 inline fun <ITEM, reified VIEW : SingleSelectItemBehavior.View<ITEM>> testSetsItemNotSelectedOnDetachWhenThisItemWasSelected(
         item: ITEM,
         noItem: ITEM,
-        createPresenter: (() -> O<ITEM>, (ITEM) -> Unit) -> Presenter<VIEW>) {
-    val getSelectedItem = mock<() -> O<ITEM>>()
+        createPresenter: (() -> Observable<ITEM>, (ITEM) -> Unit) -> Presenter<VIEW>) {
+    val getSelectedItem = mock<() -> Observable<ITEM>>()
     val setSelectedItem = mock<(ITEM) -> Unit>()
     val presenter = createPresenter(getSelectedItem, setSelectedItem)
     val view = view<ITEM, VIEW>()
-    whenever(getSelectedItem()).thenReturn(O.just(item))
+    whenever(getSelectedItem()).thenReturn(Observable.just(item))
 
     presenter attach view
     presenter detach view
@@ -157,12 +156,12 @@ inline fun <ITEM, reified VIEW : SingleSelectItemBehavior.View<ITEM>> testSetsIt
 inline fun <ITEM, reified VIEW : SingleSelectItemBehavior.View<ITEM>> testDoesNotChangeSelectStateOnDetachWhenOtherItemWasSelected(
         otherItem: ITEM,
         noItem: ITEM,
-        createPresenter: (() -> O<ITEM>, (ITEM) -> Unit) -> Presenter<VIEW>) {
-    val getSelectedItem = mock<() -> O<ITEM>>()
+        createPresenter: (() -> Observable<ITEM>, (ITEM) -> Unit) -> Presenter<VIEW>) {
+    val getSelectedItem = mock<() -> Observable<ITEM>>()
     val setSelectedItem = mock<(ITEM) -> Unit>()
     val presenter = createPresenter(getSelectedItem, setSelectedItem)
     val view = view<ITEM, VIEW>()
-    whenever(getSelectedItem()).thenReturn(O.just(otherItem))
+    whenever(getSelectedItem()).thenReturn(Observable.just(otherItem))
 
     presenter attach view
     presenter detach view
@@ -172,12 +171,12 @@ inline fun <ITEM, reified VIEW : SingleSelectItemBehavior.View<ITEM>> testDoesNo
 
 inline fun <ITEM, reified VIEW : SingleSelectItemBehavior.View<ITEM>> testDoesNotChangeSelectStateOnDetachWhenNothingWasSelected(
         noItem: ITEM,
-        createPresenter: (() -> O<ITEM>, (ITEM) -> Unit) -> Presenter<VIEW>) {
-    val getSelectedItem = mock<() -> O<ITEM>>()
+        createPresenter: (() -> Observable<ITEM>, (ITEM) -> Unit) -> Presenter<VIEW>) {
+    val getSelectedItem = mock<() -> Observable<ITEM>>()
     val setSelectedItem = mock<(ITEM) -> Unit>()
     val presenter = createPresenter(getSelectedItem, setSelectedItem)
     val view = view<ITEM, VIEW>()
-    whenever(getSelectedItem()).thenReturn(O.just(noItem))
+    whenever(getSelectedItem()).thenReturn(Observable.just(noItem))
 
     presenter attach view
     presenter detach view
@@ -188,11 +187,11 @@ inline fun <ITEM, reified VIEW : SingleSelectItemBehavior.View<ITEM>> testDoesNo
 inline fun <ITEM, reified VIEW : SingleSelectItemBehavior.View<ITEM>> testShowsNothingSelectedWhenNothingIsSelected(
         item: ITEM,
         noItem: ITEM,
-        createPresenter: (() -> O<ITEM>, (ITEM) -> Unit) -> Presenter<VIEW>) {
-    val getSelectedItem = mock<() -> O<ITEM>>()
+        createPresenter: (() -> Observable<ITEM>, (ITEM) -> Unit) -> Presenter<VIEW>) {
+    val getSelectedItem = mock<() -> Observable<ITEM>>()
     val presenter = createPresenter(getSelectedItem, mock())
     val view = view<ITEM, VIEW>()
-    whenever(getSelectedItem()).thenReturn(O.just(noItem))
+    whenever(getSelectedItem()).thenReturn(Observable.just(noItem))
 
     presenter attach view
 
@@ -202,11 +201,11 @@ inline fun <ITEM, reified VIEW : SingleSelectItemBehavior.View<ITEM>> testShowsN
 inline fun <ITEM, reified VIEW : SingleSelectItemBehavior.View<ITEM>> testShowsOtherSelectedWhenOtherItemIsSelected(
         item: ITEM,
         otherItem: ITEM,
-        createPresenter: (() -> O<ITEM>, (ITEM) -> Unit) -> Presenter<VIEW>) {
-    val getSelectedItem = mock<() -> O<ITEM>>()
+        createPresenter: (() -> Observable<ITEM>, (ITEM) -> Unit) -> Presenter<VIEW>) {
+    val getSelectedItem = mock<() -> Observable<ITEM>>()
     val presenter = createPresenter(getSelectedItem, mock())
     val view = view<ITEM, VIEW>()
-    whenever(getSelectedItem()).thenReturn(O.just(otherItem))
+    whenever(getSelectedItem()).thenReturn(Observable.just(otherItem))
 
     presenter attach view
 
@@ -215,11 +214,11 @@ inline fun <ITEM, reified VIEW : SingleSelectItemBehavior.View<ITEM>> testShowsO
 
 inline fun <ITEM, reified VIEW : SingleSelectItemBehavior.View<ITEM>> testShowsThisSelectedWhenThisItemIsSelected(
         item: ITEM,
-        createPresenter: (() -> O<ITEM>, (ITEM) -> Unit) -> Presenter<VIEW>) {
-    val getSelectedItem = mock<() -> O<ITEM>>()
+        createPresenter: (() -> Observable<ITEM>, (ITEM) -> Unit) -> Presenter<VIEW>) {
+    val getSelectedItem = mock<() -> Observable<ITEM>>()
     val presenter = createPresenter(getSelectedItem, mock())
     val view = view<ITEM, VIEW>()
-    whenever(getSelectedItem()).thenReturn(O.just(item))
+    whenever(getSelectedItem()).thenReturn(Observable.just(item))
 
     presenter attach view
 

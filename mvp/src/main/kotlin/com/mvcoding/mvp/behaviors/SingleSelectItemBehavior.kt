@@ -2,12 +2,13 @@ package com.mvcoding.mvp.behaviors
 
 import com.mvcoding.mvp.*
 import com.mvcoding.mvp.behaviors.SingleSelectItemBehavior.SingleSelectState.*
+import io.reactivex.Observable
 import io.reactivex.rxkotlin.withLatestFrom
 
 class SingleSelectItemBehavior<in ITEM, VIEW : SingleSelectItemBehavior.View<ITEM>>(
         private val item: ITEM,
         private val noItem: ITEM,
-        private val getSelectedItem: () -> O<ITEM>,
+        private val getSelectedItem: () -> Observable<ITEM>,
         private val setSelectedItem: (ITEM) -> Unit,
         private val schedulers: RxSchedulers,
         private val deselectOnDetach: Boolean = false) : Behavior<VIEW>() {
@@ -19,7 +20,7 @@ class SingleSelectItemBehavior<in ITEM, VIEW : SingleSelectItemBehavior.View<ITE
             selectedItemWriter: DataWriter<ITEM>,
             schedulers: RxSchedulers,
             deselectOnDetach: Boolean = false) :
-            this(item, noItem, selectedItemSource.functionDataSource(), selectedItemWriter.functionDataWriter(), schedulers, deselectOnDetach)
+            this(item, noItem, selectedItemSource.observableFunction(), selectedItemWriter.writeFunction(), schedulers, deselectOnDetach)
 
     override fun onViewAttached(view: VIEW) {
         super.onViewAttached(view)
@@ -68,7 +69,7 @@ class SingleSelectItemBehavior<in ITEM, VIEW : SingleSelectItemBehavior.View<ITE
     }
 
     interface View<in ITEM> : Presenter.View {
-        fun selects(): O<Unit>
+        fun selects(): Observable<Unit>
         fun showThisSelected(item: ITEM)
         fun showNothingSelected(item: ITEM)
         fun showOtherSelected(item: ITEM, other: ITEM)

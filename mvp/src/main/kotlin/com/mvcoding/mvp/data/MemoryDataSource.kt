@@ -1,16 +1,16 @@
 package com.mvcoding.mvp.data
 
 import com.mvcoding.mvp.DataSource
-import com.mvcoding.mvp.O
+import io.reactivex.Observable
 
 class MemoryDataSource<DATA>(dataSource: DataSource<DATA>) : DataSource<DATA> {
-    constructor(dataSource: () -> O<DATA>) : this(dataSource.dataSource())
+    constructor(dataSource: () -> Observable<DATA>) : this(dataSource.dataSource())
 
     private val observable by lazy { dataSource.data().replay(1).autoConnect() }
 
-    override fun data(): O<DATA> = observable
+    override fun data(): Observable<DATA> = observable
 }
 
 fun <DATA> DataSource<DATA>.memoryDataSource() = MemoryDataSource(this)
-fun <DATA> (() -> O<DATA>).memoryDataSource() = MemoryDataSource(this)
-fun <DATA> O<DATA>.memoryDataSource() = this.dataSource().memoryDataSource()
+fun <DATA> (() -> Observable<DATA>).memoryDataSource() = MemoryDataSource(this)
+fun <DATA> Observable<DATA>.memoryDataSource() = this.dataSource().memoryDataSource()

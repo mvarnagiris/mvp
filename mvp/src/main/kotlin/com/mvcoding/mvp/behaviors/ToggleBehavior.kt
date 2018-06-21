@@ -10,7 +10,7 @@ class ToggleBehavior<VIEW : ToggleBehavior.View>(
         private val schedulers: RxSchedulers) : Behavior<VIEW>() {
 
     constructor(selectedSource: DataSource<Boolean>, selectedWriter: DataWriter<Boolean>, schedulers: RxSchedulers) :
-            this(selectedSource.functionDataSource(), selectedWriter.functionDataWriter(), schedulers)
+            this(selectedSource.observableFunction(), selectedWriter.writeFunction(), schedulers)
 
     constructor(selectedCache: DataCache<Boolean>, schedulers: RxSchedulers) : this(selectedCache, selectedCache, schedulers)
 
