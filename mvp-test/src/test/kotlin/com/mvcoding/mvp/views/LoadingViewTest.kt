@@ -1,10 +1,10 @@
 package com.mvcoding.mvp.views
 
-import com.mvcoding.mvp.O
 import com.nhaarman.mockitokotlin2.inOrder
 import com.nhaarman.mockitokotlin2.mock
 import com.nhaarman.mockitokotlin2.verify
 import com.nhaarman.mockitokotlin2.verifyNoMoreInteractions
+import io.reactivex.Observable
 import io.reactivex.observers.TestObserver
 import io.reactivex.subjects.PublishSubject
 import org.junit.Test
@@ -31,7 +31,7 @@ class LoadingViewTest {
         val view = mock<LoadingView>()
         val observer = TestObserver.create<Int>()
 
-        O.error<Int>(Throwable()).showHideLoading(view).subscribe(observer)
+        Observable.error<Int>(Throwable()).showHideLoading(view).subscribe(observer)
         inOrder(view) {
             verify(view).showLoading()
             verify(view).hideLoading()

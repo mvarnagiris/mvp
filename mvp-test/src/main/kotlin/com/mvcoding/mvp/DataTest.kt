@@ -5,6 +5,7 @@ import com.mvcoding.mvp.views.DataView
 import com.nhaarman.mockitokotlin2.mock
 import com.nhaarman.mockitokotlin2.timeout
 import com.nhaarman.mockitokotlin2.whenever
+import io.reactivex.Observable
 import io.reactivex.Scheduler
 import io.reactivex.plugins.RxJavaPlugins
 import org.mockito.Mockito
@@ -101,7 +102,7 @@ class LoadDataBehaviourAssertion<T, V : DataView<T>>(val presenter: Presenter<V>
         fun verifyLoadDataBehavior() {
             val viewMock = threadMock<DataView<T>>()
 
-            whenever(dataSource.data()).thenReturn(O.just(value))
+            whenever(dataSource.data()).thenReturn(Observable.just(value))
 
             presenter attach viewMock() as V
 

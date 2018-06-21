@@ -22,5 +22,4 @@ dependencies {
     compile "org.jetbrains.kotlin:kotlin-stdlib:$kotlin_version"
     compile "io.reactivex.rxjava2:rxkotlin:2.2.0"
     compile "com.jakewharton.rxrelay2:rxrelay:2.0.0"
-//    compile 'com.github.mvarnagiris:mvp-test:v2.0.0-alpha7'
 }

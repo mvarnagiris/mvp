@@ -1,8 +1,8 @@
 package com.mvcoding.mvp.views
 
-import com.mvcoding.mvp.O
 import com.nhaarman.mockitokotlin2.mock
 import com.nhaarman.mockitokotlin2.whenever
+import io.reactivex.Observable
 import io.reactivex.observers.TestObserver
 import io.reactivex.subjects.PublishSubject
 import org.junit.Test
@@ -15,7 +15,7 @@ class RefreshableViewTest {
         val view = mock<RefreshableView>()
         val refreshSubject = PublishSubject.create<Unit>()
         whenever(view.refreshes()).thenReturn(refreshSubject)
-        val observable = O.just(1)
+        val observable = Observable.just(1)
         val observer = TestObserver.create<Int>()
 
         observable.refreshable(view).subscribe(observer)

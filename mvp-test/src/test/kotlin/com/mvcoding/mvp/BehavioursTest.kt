@@ -15,7 +15,7 @@ import ro.kreator.aRandom
 class BehavioursTest {
 
     val view = mock<ViewForTest>()
-    val dataSource = mock<(String) -> O<String>>()
+    val dataSource = mock<(String) -> Observable<String>>()
     val input by aRandom<String>()
     val data by aRandom<String>()
     val mapError = { error: Throwable -> error}
