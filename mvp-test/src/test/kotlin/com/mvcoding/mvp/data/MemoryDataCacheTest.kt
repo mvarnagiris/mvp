@@ -23,7 +23,7 @@ class MemoryDataCacheTest {
 
     @Test
     fun `emits last value that was written after subscriptions`() {
-        testEmitsLastValueThatWasWrittenAfterSubscriptions(1, createDataCache)
+        testEmitsLastValueThatWasWrittenAfterSubscriptions(null, 1, createDataCache)
     }
 }
 

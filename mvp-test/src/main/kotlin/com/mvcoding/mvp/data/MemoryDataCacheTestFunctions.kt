@@ -8,13 +8,13 @@ fun <DATA, CACHE> testMemoryDataCache(data: DATA, createDataCache: (DATA?) -> CA
     testDoesNotEmitAnythingInitiallyIfInitialDataWasNotProvided(createDataCache)
     testEmitsInitialValueIfItWasProvided(data, createDataCache)
     testEmitsLastValueThatWasWrittenBeforeSubscriptions(data, createDataCache)
-    testEmitsLastValueThatWasWrittenAfterSubscriptions(data, createDataCache)
+    testEmitsLastValueThatWasWrittenAfterSubscriptions(null, data, createDataCache)
 }
 
-fun <DATA, CACHE> testMemoryDataCacheWithDefaultValue(defaultValue: DATA, data: DATA, createDataCache: (DATA?) -> CACHE) where CACHE : DataSource<DATA>, CACHE : DataWriter<DATA> {
-    testEmitsInitialValueIfItWasProvided(defaultValue, createDataCache)
+fun <DATA, CACHE> testMemoryDataCacheWithDefaultValue(initialValue: DATA, data: DATA, createDataCache: (DATA?) -> CACHE) where CACHE : DataSource<DATA>, CACHE : DataWriter<DATA> {
+    testEmitsInitialValueIfItWasProvided(initialValue, createDataCache)
     testEmitsLastValueThatWasWrittenBeforeSubscriptions(data, createDataCache)
-    testEmitsLastValueThatWasWrittenAfterSubscriptions(data, createDataCache)
+    testEmitsLastValueThatWasWrittenAfterSubscriptions(initialValue, data, createDataCache)
 }
 
 internal fun <DATA, CACHE> testDoesNotEmitAnythingInitiallyIfInitialDataWasNotProvided(createDataCache: (DATA?) -> CACHE) where CACHE : DataSource<DATA>, CACHE : DataWriter<DATA> {
@@ -45,7 +45,7 @@ internal fun <DATA, CACHE> testEmitsLastValueThatWasWrittenBeforeSubscriptions(d
     observer.assertValue(data)
 }
 
-internal fun <DATA, CACHE> testEmitsLastValueThatWasWrittenAfterSubscriptions(data: DATA, createDataCache: (DATA?) -> CACHE) where CACHE : DataSource<DATA>, CACHE : DataWriter<DATA> {
+internal fun <DATA, CACHE> testEmitsLastValueThatWasWrittenAfterSubscriptions(initialData: DATA?, data: DATA, createDataCache: (DATA?) -> CACHE) where CACHE : DataSource<DATA>, CACHE : DataWriter<DATA> {
     val observer1 = TestObserver.create<DATA>()
     val observer2 = TestObserver.create<DATA>()
     val dataCache = createDataCache(null)
@@ -54,6 +54,12 @@ internal fun <DATA, CACHE> testEmitsLastValueThatWasWrittenAfterSubscriptions(da
     dataCache.data().subscribe(observer2)
     dataCache.write(data)
 
-    observer1.assertValue(data)
-    observer2.assertValue(data)
+    if (initialData != null) {
+        observer1.assertValues(initialData, data)
+        observer2.assertValues(initialData, data)
+    } else {
+        observer1.assertValue(data)
+        observer2.assertValue(data)
+    }
+
 }
