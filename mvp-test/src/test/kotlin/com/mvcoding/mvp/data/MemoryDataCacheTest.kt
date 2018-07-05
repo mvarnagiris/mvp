@@ -1,6 +1,7 @@
 package com.mvcoding.mvp.data
 
-import com.mvcoding.mvp.DataCache
+import com.mvcoding.mvp.DataSource
+import com.mvcoding.mvp.DataWriter
 import io.reactivex.observers.TestObserver
 import org.junit.Test
 
@@ -29,7 +30,14 @@ class MemoryDataCacheTest {
     }
 }
 
-private fun <DATA> testDoesNotEmitAnythingInitiallyIfInitialDataWasNotProvided(createDataCache: (DATA?) -> DataCache<DATA>) {
+fun <DATA, CACHE> testMemoryDataCache(data: DATA, createDataCache: (DATA?) -> CACHE) where CACHE : DataSource<DATA>, CACHE : DataWriter<DATA> {
+    testDoesNotEmitAnythingInitiallyIfInitialDataWasNotProvided(createDataCache)
+    testEmitsInitialValueIfItWasProvided(data, createDataCache)
+    testEmitsLastValueThatWasWrittenBeforeSubscriptions(data, createDataCache)
+    testEmitsLastValueThatWasWrittenAfterSubscriptions(data, createDataCache)
+}
+
+private fun <DATA, CACHE> testDoesNotEmitAnythingInitiallyIfInitialDataWasNotProvided(createDataCache: (DATA?) -> CACHE) where CACHE : DataSource<DATA>, CACHE : DataWriter<DATA> {
     val observer = TestObserver.create<DATA>()
     val dataCache = createDataCache(null)
 
@@ -38,7 +46,7 @@ private fun <DATA> testDoesNotEmitAnythingInitiallyIfInitialDataWasNotProvided(c
     observer.assertNoValues()
 }
 
-private fun <DATA> testEmitsInitialValueIfItWasProvided(initialData: DATA, createDataCache: (DATA?) -> DataCache<DATA>) {
+private fun <DATA, CACHE> testEmitsInitialValueIfItWasProvided(initialData: DATA, createDataCache: (DATA?) -> CACHE) where CACHE : DataSource<DATA>, CACHE : DataWriter<DATA> {
     val observer = TestObserver.create<DATA>()
     val dataCache = createDataCache(initialData)
 
@@ -47,7 +55,7 @@ private fun <DATA> testEmitsInitialValueIfItWasProvided(initialData: DATA, creat
     observer.assertValue(initialData)
 }
 
-private fun <DATA> testEmitsLastValueThatWasWrittenBeforeSubscriptions(data: DATA, createDataCache: (DATA?) -> DataCache<DATA>) {
+private fun <DATA, CACHE> testEmitsLastValueThatWasWrittenBeforeSubscriptions(data: DATA, createDataCache: (DATA?) -> CACHE) where CACHE : DataSource<DATA>, CACHE : DataWriter<DATA> {
     val observer = TestObserver.create<DATA>()
     val dataCache = createDataCache(null)
 
@@ -57,7 +65,7 @@ private fun <DATA> testEmitsLastValueThatWasWrittenBeforeSubscriptions(data: DAT
     observer.assertValue(data)
 }
 
-private fun <DATA> testEmitsLastValueThatWasWrittenAfterSubscriptions(data: DATA, createDataCache: (DATA?) -> DataCache<DATA>) {
+private fun <DATA, CACHE> testEmitsLastValueThatWasWrittenAfterSubscriptions(data: DATA, createDataCache: (DATA?) -> CACHE) where CACHE : DataSource<DATA>, CACHE : DataWriter<DATA> {
     val observer1 = TestObserver.create<DATA>()
     val observer2 = TestObserver.create<DATA>()
     val dataCache = createDataCache(null)
