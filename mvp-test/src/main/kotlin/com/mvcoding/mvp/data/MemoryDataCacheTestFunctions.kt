@@ -11,6 +11,12 @@ fun <DATA, CACHE> testMemoryDataCache(data: DATA, createDataCache: (DATA?) -> CA
     testEmitsLastValueThatWasWrittenAfterSubscriptions(data, createDataCache)
 }
 
+fun <DATA, CACHE> testMemoryDataCacheWithDefaultValue(defaultValue: DATA, data: DATA, createDataCache: (DATA?) -> CACHE) where CACHE : DataSource<DATA>, CACHE : DataWriter<DATA> {
+    testEmitsInitialValueIfItWasProvided(defaultValue, createDataCache)
+    testEmitsLastValueThatWasWrittenBeforeSubscriptions(data, createDataCache)
+    testEmitsLastValueThatWasWrittenAfterSubscriptions(data, createDataCache)
+}
+
 internal fun <DATA, CACHE> testDoesNotEmitAnythingInitiallyIfInitialDataWasNotProvided(createDataCache: (DATA?) -> CACHE) where CACHE : DataSource<DATA>, CACHE : DataWriter<DATA> {
     val observer = TestObserver.create<DATA>()
     val dataCache = createDataCache(null)
