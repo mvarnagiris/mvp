@@ -23,6 +23,6 @@ dependencies {
     compile "junit:junit:4.12"
     compile 'com.github.memoizr:assertk-core:1.0.0-beta.2'
     compile "org.jetbrains.kotlin:kotlin-test:$kotlin_version"
-    compile "com.nhaarman.mockitokotlin2:mockito-kotlin:2.0.0-alpha03"
+    compile "com.nhaarman.mockitokotlin2:mockito-kotlin:2.0.0-RC1"
     compile 'com.github.random-object-kreator:random-object-kreator:1.0.1'
 }
