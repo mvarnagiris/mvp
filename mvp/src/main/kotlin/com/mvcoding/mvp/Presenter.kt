@@ -1,9 +1,6 @@
 package com.mvcoding.mvp
 
-import io.reactivex.Flowable
-import io.reactivex.Maybe
-import io.reactivex.Observable
-import io.reactivex.Single
+import io.reactivex.*
 import io.reactivex.disposables.CompositeDisposable
 import io.reactivex.disposables.Disposable
 
@@ -56,11 +53,13 @@ abstract class Presenter<VIEW : Presenter.View>(private vararg val behaviors: Be
     protected fun <T> Flowable<T>.subscribeUntilDetached(): Disposable = subscribe().apply { disposeOnDetach(this) }
     protected fun <T> Single<T>.subscribeUntilDetached(): Disposable = subscribe().apply { disposeOnDetach(this) }
     protected fun <T> Maybe<T>.subscribeUntilDetached(): Disposable = subscribe().apply { disposeOnDetach(this) }
+    protected fun Completable.subscribeUntilDetached(): Disposable = subscribe().apply { disposeOnDetach(this) }
 
     protected fun <T> Observable<T>.subscribeUntilDetached(onNext: (T) -> Unit): Disposable = subscribe(onNext).apply { disposeOnDetach(this) }
     protected fun <T> Flowable<T>.subscribeUntilDetached(onNext: (T) -> Unit): Disposable = subscribe(onNext).apply { disposeOnDetach(this) }
     protected fun <T> Single<T>.subscribeUntilDetached(onSuccess: (T) -> Unit): Disposable = subscribe(onSuccess).apply { disposeOnDetach(this) }
     protected fun <T> Maybe<T>.subscribeUntilDetached(onSuccess: (T) -> Unit): Disposable = subscribe(onSuccess).apply { disposeOnDetach(this) }
+    protected fun Completable.subscribeUntilDetached(onComplete: () -> Unit): Disposable = subscribe(onComplete).apply { disposeOnDetach(this) }
 
     protected fun <T> Observable<T>.subscribeUntilDetached(onNext: (T) -> Unit, onError: (Throwable) -> Unit): Disposable =
             subscribe(onNext, onError).apply { disposeOnDetach(this) }
@@ -73,6 +72,9 @@ abstract class Presenter<VIEW : Presenter.View>(private vararg val behaviors: Be
 
     protected fun <T> Maybe<T>.subscribeUntilDetached(onSuccess: (T) -> Unit, onError: (Throwable) -> Unit): Disposable =
             subscribe(onSuccess, onError).apply { disposeOnDetach(this) }
+
+    protected fun Completable.subscribeUntilDetached(onComplete: () -> Unit, onError: (Throwable) -> Unit): Disposable =
+            subscribe(onComplete, onError).apply { disposeOnDetach(this) }
 
     protected fun <T> Observable<T>.subscribeUntilDetached(onNext: (T) -> Unit, onError: (Throwable) -> Unit, onComplete: () -> Unit): Disposable =
             subscribe(onNext, onError, onComplete).apply { disposeOnDetach(this) }
